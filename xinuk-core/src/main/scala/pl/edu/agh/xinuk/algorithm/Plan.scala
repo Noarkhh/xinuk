@@ -10,7 +10,12 @@ trait Update
  * alternative: optional Update to be applied to the source cell if action is rejected
  */
 final case class Plan(action: Update, consequence: Option[Update], alternative: Option[Update]) {
-  def toTargeted(planSource: CellId, actionTarget: CellId, consequenceTarget: CellId, alternativeTarget: CellId): TargetedPlan =
+  def toTargeted(
+      planSource: CellId,
+      actionTarget: CellId,
+      consequenceTarget: CellId,
+      alternativeTarget: CellId
+  ): TargetedPlan =
     TargetedPlan(
       TargetedUpdate(actionTarget, planSource, action),
       consequence.map(TargetedUpdate(consequenceTarget, planSource, _)),
@@ -40,14 +45,16 @@ final case class Plans(plans: Seq[(Option[Direction], Plan)] = Seq.empty) {
   }
 
   def outwardsPlans: Map[Direction, Seq[Plan]] = {
-    plans.filter(_._1.isDefined)
+    plans
+      .filter(_._1.isDefined)
       .map { case (dirOpt, plan) => (dirOpt.get, plan) }
       .groupBy(_._1)
-      .map {case (dir, groups) => (dir, groups.map(_._2)) }
+      .map { case (dir, groups) => (dir, groups.map(_._2)) }
   }
 
   def localPlans: Seq[Plan] = {
-    plans.filter(_._1.isEmpty)
+    plans
+      .filter(_._1.isEmpty)
       .map(_._2)
   }
 }
@@ -62,4 +69,8 @@ object Plans {
 
 final case class TargetedUpdate(target: CellId, source: CellId, update: Update)
 
-final case class TargetedPlan(action: TargetedUpdate, consequence: Option[TargetedUpdate], alternative: Option[TargetedUpdate])
+final case class TargetedPlan(
+    action: TargetedUpdate,
+    consequence: Option[TargetedUpdate],
+    alternative: Option[TargetedUpdate]
+)

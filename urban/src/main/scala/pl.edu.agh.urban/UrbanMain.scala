@@ -1,7 +1,12 @@
 package pl.edu.agh.urban
 
 import com.typesafe.scalalogging.LazyLogging
-import pl.edu.agh.urban.algorithm.{UrbanMetrics, UrbanPlanCreator, UrbanPlanResolver, UrbanWorldCreator}
+import pl.edu.agh.urban.algorithm.{
+  UrbanMetrics,
+  UrbanPlanCreator,
+  UrbanPlanResolver,
+  UrbanWorldCreator
+}
 import pl.edu.agh.urban.config.UrbanConfig
 import pl.edu.agh.xinuk.Simulation
 import pl.edu.agh.xinuk.model.grid.GridSignalPropagation
@@ -20,7 +25,6 @@ object UrbanMain extends LazyLogging {
       UrbanMetrics.empty,
       GridSignalPropagation.Bending,
       UrbanConfig.cellToColor
-      ).start()
+    ).start()
   }
 }
-

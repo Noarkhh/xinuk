@@ -19,11 +19,12 @@ object FortwistWorldCreator extends WorldCreator[FortwistConfig] {
       x <- 0 until config.worldWidth
       y <- 0 until config.worldHeight
     } {
-      val foraminiferas: Seq[Foraminifera] = if (random.nextDouble() < config.foraminiferaSpawnChance) {
-        Seq(Foraminifera())
-      } else {
-        Seq()
-      }
+      val foraminiferas: Seq[Foraminifera] =
+        if (random.nextDouble() < config.foraminiferaSpawnChance) {
+          Seq(Foraminifera())
+        } else {
+          Seq()
+        }
       worldBuilder(GridCellId(x, y)) = CellState(Seabed(foraminiferas, config.algaeStartEnergy))
     }
 

@@ -3,7 +3,12 @@ package pl.edu.agh.torch
 import java.awt.Color
 
 import com.typesafe.scalalogging.LazyLogging
-import pl.edu.agh.torch.algorithm.{TorchMetrics, TorchPlanCreator, TorchPlanResolver, TorchWorldCreator}
+import pl.edu.agh.torch.algorithm.{
+  TorchMetrics,
+  TorchPlanCreator,
+  TorchPlanResolver,
+  TorchWorldCreator
+}
 import pl.edu.agh.torch.model.{Exit, Fire, Person}
 import pl.edu.agh.xinuk.Simulation
 import pl.edu.agh.xinuk.model.grid.GridSignalPropagation
@@ -29,23 +34,21 @@ object TorchMain extends LazyLogging {
       TorchPlanResolver,
       TorchMetrics.empty,
       GridSignalPropagation.Standard,
-      {
-        case cellState =>
-          cellState.contents match {
-            case Person(_) => Color.BLUE
-            case Fire => Color.ORANGE
-            case Exit => new Color(139, 69, 19)
-            case Obstacle => Color.BLACK
-            case _ => Color.WHITE
+      { case cellState =>
+        cellState.contents match {
+          case Person(_) => Color.BLUE
+          case Fire      => Color.ORANGE
+          case Exit      => new Color(139, 69, 19)
+          case Obstacle  => Color.BLACK
+          case _         => Color.WHITE
 //            case _ => cellToColorSign(cellState)
-          }
-      }).start()
+        }
+      }
+    ).start()
   }
 
   private def cellToColorSign(cellState: CellState): Color = {
-    val maxSignal = cellState.signalMap
-      .values
-      .toSeq
+    val maxSignal = cellState.signalMap.values.toSeq
       .sortBy(s => -Math.abs(s.value))
       .collectFirst({ case s: Signal => s.value })
       .getOrElse(0d)
@@ -60,4 +63,3 @@ object TorchMain extends LazyLogging {
     Color.getHSBColor(hue, saturation, brightness)
   }
 }
-

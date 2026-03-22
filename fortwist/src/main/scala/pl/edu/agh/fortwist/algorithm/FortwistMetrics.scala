@@ -2,14 +2,16 @@ package pl.edu.agh.fortwist.algorithm
 
 import pl.edu.agh.xinuk.algorithm.Metrics
 
-final case class FortwistMetrics(foraminiferaCount: Long,
-                                 algaeCount: Double,
-                                 foraminiferaDeaths: Long,
-                                 foraminiferaTotalEnergy: Double,
-                                 foraminiferaReproductionsCount: Long,
-                                 consumedAlgaeCount: Double,
-                                 foraminiferaTotalLifespan: Long,
-                                 foraminiferaMoves: Long) extends Metrics {
+final case class FortwistMetrics(
+    foraminiferaCount: Long,
+    algaeCount: Double,
+    foraminiferaDeaths: Long,
+    foraminiferaTotalEnergy: Double,
+    foraminiferaReproductionsCount: Long,
+    consumedAlgaeCount: Double,
+    foraminiferaTotalLifespan: Long,
+    foraminiferaMoves: Long
+) extends Metrics {
 
   override def log: String = {
     s"$foraminiferaCount;$algaeCount;$foraminiferaDeaths;$foraminiferaTotalEnergy;$foraminiferaReproductionsCount;$consumedAlgaeCount;$foraminiferaTotalLifespan;$foraminiferaMoves"
@@ -23,9 +25,16 @@ final case class FortwistMetrics(foraminiferaCount: Long,
   override def +(other: Metrics): FortwistMetrics = {
     other match {
       case FortwistMetrics.Empty => this
-      case FortwistMetrics(otherForaminiferaCount, otherAlgaeCount, otherForaminiferaDeaths,
-      otherForaminiferaTotalEnergy, otherForaminiferaReproductionsCount, otherConsumedAlgaeCount,
-      otherForaminiferaTotalLifespan, otherForaminiferaMoves) =>
+      case FortwistMetrics(
+            otherForaminiferaCount,
+            otherAlgaeCount,
+            otherForaminiferaDeaths,
+            otherForaminiferaTotalEnergy,
+            otherForaminiferaReproductionsCount,
+            otherConsumedAlgaeCount,
+            otherForaminiferaTotalLifespan,
+            otherForaminiferaMoves
+          ) =>
         FortwistMetrics(
           foraminiferaCount + otherForaminiferaCount,
           algaeCount + otherAlgaeCount,
@@ -34,8 +43,12 @@ final case class FortwistMetrics(foraminiferaCount: Long,
           foraminiferaReproductionsCount + otherForaminiferaReproductionsCount,
           consumedAlgaeCount + otherConsumedAlgaeCount,
           foraminiferaTotalLifespan + otherForaminiferaTotalLifespan,
-          foraminiferaMoves + otherForaminiferaMoves)
-      case _ => throw new UnsupportedOperationException(s"Cannot add: non-FortwistMetrics to FortwistMetrics")
+          foraminiferaMoves + otherForaminiferaMoves
+        )
+      case _ =>
+        throw new UnsupportedOperationException(
+          s"Cannot add: non-FortwistMetrics to FortwistMetrics"
+        )
     }
   }
 }

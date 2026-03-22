@@ -14,7 +14,8 @@ final case class Seabed(foraminiferas: Seq[Foraminifera], algae: Double) extends
 }
 
 object Seabed {
-  def apply(foraminiferas: Seq[Foraminifera], algae: Double): Seabed = new Seabed(foraminiferas, math.min(1.0, algae))
+  def apply(foraminiferas: Seq[Foraminifera], algae: Double): Seabed =
+    new Seabed(foraminiferas, math.min(1.0, algae))
 
   def apply(foraminiferas: Seq[Foraminifera] = Seq.empty): Seabed = Seabed(foraminiferas, 0)
 
@@ -28,5 +29,6 @@ final case class Foraminifera(energy: Double, lifespan: Long, id: UUID = UUID.ra
 }
 
 object Foraminifera {
-  def apply()(implicit config: FortwistConfig): Foraminifera = Foraminifera(config.foraminiferaStartEnergy, 0)
+  def apply()(implicit config: FortwistConfig): Foraminifera =
+    Foraminifera(config.foraminiferaStartEnergy, 0)
 }

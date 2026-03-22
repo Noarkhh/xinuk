@@ -18,8 +18,7 @@ object RabbitsWorldCreator extends WorldCreator[RabbitsConfig] {
     } {
       val contents: CellContents = if (config.random.nextDouble() < config.rabbitSpawnChance) {
         Rabbit(config.rabbitStartEnergy, 0)
-      }
-      else {
+      } else {
         Lettuce(0)
       }
 

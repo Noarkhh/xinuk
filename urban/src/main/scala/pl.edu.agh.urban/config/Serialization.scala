@@ -16,7 +16,6 @@ import javax.imageio.ImageIO
 import pl.edu.agh.xinuk.model.grid.{GridCellId, GridDirection}
 import pl.edu.agh.xinuk.model.{Direction, Signal, SignalMap, WorkerId}
 
-
 object Serialization {
 
   private val mapper = MapperConfig.Mapper
@@ -43,17 +42,27 @@ object Serialization {
 
   def loadStaticPaths()(implicit config: UrbanConfig): Map[String, Map[GridCellId, Direction]] = {
     val path: Path = Paths.get(config.urbanDataRootPath, config.staticPathsDir)
-    path.toFile.list().map {
-      filename =>
+    path.toFile
+      .list()
+      .map { filename =>
         val file = Paths.get(path.toString, filename).toFile
         val buildingId = file.getName.split('.').head
-        val buildingStaticPaths = mapper.readValue(file, new TypeReference[Map[GridCellId, Direction]]() {})
+        val buildingStaticPaths =
+          mapper.readValue(file, new TypeReference[Map[GridCellId, Direction]]() {})
         (buildingId, buildingStaticPaths)
-    }.toMap
+      }
+      .toMap
   }
 
-  def dumpStaticSignal(signal: Map[GridCellId, SignalMap], buildingId: String, workerId: WorkerId)(implicit config: UrbanConfig): Unit = {
-    val path = Paths.get(config.urbanDataRootPath, config.staticSignalDir, buildingId, f"${workerId.value}%04d.json")
+  def dumpStaticSignal(signal: Map[GridCellId, SignalMap], buildingId: String, workerId: WorkerId)(
+      implicit config: UrbanConfig
+  ): Unit = {
+    val path = Paths.get(
+      config.urbanDataRootPath,
+      config.staticSignalDir,
+      buildingId,
+      f"${workerId.value}%04d.json"
+    )
     path.getParent.toFile.mkdirs()
     path.toFile.createNewFile()
     writeSignalFile(signal, path.toFile)
@@ -65,49 +74,58 @@ object Serialization {
   // old unused methods that might yet be useful
 
   private def readSignalDirectory(buildingPath: Path): Map[GridCellId, SignalMap] = {
-    buildingPath.toFile.list().map {
-      filename =>
-        mapper.readValue(
-          Paths.get(buildingPath.toString, filename).toFile,
-          new TypeReference[Map[GridCellId, SignalMap]]() {}
-        ).toSeq
-    }.reduce(_ ++ _).toMap
+    buildingPath.toFile
+      .list()
+      .map { filename =>
+        mapper
+          .readValue(
+            Paths.get(buildingPath.toString, filename).toFile,
+            new TypeReference[Map[GridCellId, SignalMap]]() {}
+          )
+          .toSeq
+      }
+      .reduce(_ ++ _)
+      .toMap
   }
 
-  private def loadStaticSignal()(implicit config: UrbanConfig): Map[String, Map[GridCellId, SignalMap]] = {
+  private def loadStaticSignal()(implicit
+      config: UrbanConfig
+  ): Map[String, Map[GridCellId, SignalMap]] = {
     val path: Path = Paths.get(config.urbanDataRootPath, config.staticSignalDir)
-    path.toFile.list().map {
-      buildingId =>
+    path.toFile
+      .list()
+      .map { buildingId =>
         val buildingPath = Paths.get(path.toString, buildingId)
         val buildingSignal = readSignalDirectory(buildingPath)
         (buildingId, buildingSignal)
-    }.toMap
+      }
+      .toMap
   }
 
   private def convertStaticSignalToPaths(): Unit = {
     val inPath: Path = Paths.get("urbanData", "staticSignal")
     val outPath: Path = Paths.get("urbanData", "staticPaths")
 
-    inPath.toFile.list().foreach {
-      buildingId =>
-        val buildingPath = Paths.get(inPath.toString, buildingId)
-        val buildingSignal = readSignalDirectory(buildingPath)
+    inPath.toFile.list().foreach { buildingId =>
+      val buildingPath = Paths.get(inPath.toString, buildingId)
+      val buildingSignal = readSignalDirectory(buildingPath)
 
-        val buildingDirections: Map[GridCellId, Direction] = buildingSignal.map {
-          case (cellId, signalMap) =>
-            val bestDirection: Direction = signalMap.maxBy(_._2)._1
-            if (signalMap(bestDirection).value > 0d) {
-              (cellId, Some(bestDirection))
-            } else {
-              (cellId, None)
-            }
-        }.filter(_._2.isDefined)
-          .map { case (cellId, directionOpt) => (cellId, directionOpt.get)}
+      val buildingDirections: Map[GridCellId, Direction] = buildingSignal
+        .map { case (cellId, signalMap) =>
+          val bestDirection: Direction = signalMap.maxBy(_._2)._1
+          if (signalMap(bestDirection).value > 0d) {
+            (cellId, Some(bestDirection))
+          } else {
+            (cellId, None)
+          }
+        }
+        .filter(_._2.isDefined)
+        .map { case (cellId, directionOpt) => (cellId, directionOpt.get) }
 
-        val outFile = Paths.get(outPath.toString, f"$buildingId.json").toFile
+      val outFile = Paths.get(outPath.toString, f"$buildingId.json").toFile
 
-        mapper.writeValue(outFile, buildingDirections)
-        println(f"$buildingId done")
+      mapper.writeValue(outFile, buildingDirections)
+      println(f"$buildingId done")
     }
   }
 }
@@ -197,7 +215,11 @@ private object MapperConfig {
   }
 
   private object GridCellIdSerializer extends JsonSerializer[GridCellId] {
-    override def serialize(id: GridCellId, json: JsonGenerator, provider: SerializerProvider): Unit = {
+    override def serialize(
+        id: GridCellId,
+        json: JsonGenerator,
+        provider: SerializerProvider
+    ): Unit = {
       json.writeString(s"${id.x},${id.y}")
     }
   }
@@ -211,7 +233,11 @@ private object MapperConfig {
   }
 
   private object GridCellIdKeySerializer extends JsonSerializer[GridCellId] {
-    override def serialize(id: GridCellId, json: JsonGenerator, provider: SerializerProvider): Unit = {
+    override def serialize(
+        id: GridCellId,
+        json: JsonGenerator,
+        provider: SerializerProvider
+    ): Unit = {
       json.writeFieldName(s"${id.x},${id.y}")
     }
   }
@@ -224,7 +250,11 @@ private object MapperConfig {
   }
 
   private object DirectionSerializer extends JsonSerializer[Direction] {
-    override def serialize(direction: Direction, json: JsonGenerator, provider: SerializerProvider): Unit = {
+    override def serialize(
+        direction: Direction,
+        json: JsonGenerator,
+        provider: SerializerProvider
+    ): Unit = {
       json.writeString(direction.toString)
     }
   }
@@ -238,7 +268,11 @@ private object MapperConfig {
   }
 
   private object DirectionKeySerializer extends JsonSerializer[Direction] {
-    override def serialize(direction: Direction, json: JsonGenerator, provider: SerializerProvider): Unit = {
+    override def serialize(
+        direction: Direction,
+        json: JsonGenerator,
+        provider: SerializerProvider
+    ): Unit = {
       json.writeFieldName(direction.toString)
     }
   }
@@ -264,7 +298,11 @@ private object MapperConfig {
   }
 
   private object LocalTimeSerializer extends JsonSerializer[LocalTime] {
-    override def serialize(time: LocalTime, json: JsonGenerator, provider: SerializerProvider): Unit = {
+    override def serialize(
+        time: LocalTime,
+        json: JsonGenerator,
+        provider: SerializerProvider
+    ): Unit = {
       json.writeString(time.format(formatter))
     }
   }

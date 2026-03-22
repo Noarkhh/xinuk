@@ -10,18 +10,22 @@ import scala.util.Random
 
 final case class MockPlanCreator() extends PlanCreator[MockConfig] {
 
-  override def createPlans(iteration: Long, cellId: CellId, cellState: CellState, neighbourContents: Map[Direction, CellContents])
-                          (implicit config: MockConfig): (Plans, MockMetrics) = {
+  override def createPlans(
+      iteration: Long,
+      cellId: CellId,
+      cellState: CellState,
+      neighbourContents: Map[Direction, CellContents]
+  )(implicit config: MockConfig): (Plans, MockMetrics) = {
     cellState.contents match {
       case Mock => (randomMove(neighbourContents), MockMetrics(1, 0))
-      case _ => (Plans.empty, MockMetrics.empty)
+      case _    => (Plans.empty, MockMetrics.empty)
     }
   }
 
   def randomMove(neighbours: Map[Direction, CellContents])(implicit config: MockConfig): Plans = {
     val availableDirections = neighbours.filter {
       case (_, Empty) => true
-      case _ => false
+      case _          => false
     }
 
     if (availableDirections.isEmpty) {

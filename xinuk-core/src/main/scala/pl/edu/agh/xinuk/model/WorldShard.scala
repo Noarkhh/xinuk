@@ -2,7 +2,6 @@ package pl.edu.agh.xinuk.model
 
 import pl.edu.agh.xinuk.config.XinukConfig
 
-
 trait WorldType {
   def directions: Seq[Direction]
 }
@@ -26,7 +25,9 @@ trait WorldShard {
 
   def cellToWorker: Map[CellId, WorkerId]
 
-  def calculateSignalUpdates(iteration: Long, signalPropagation: SignalPropagation)(implicit config: XinukConfig): Map[CellId, SignalMap] = {
+  def calculateSignalUpdates(iteration: Long, signalPropagation: SignalPropagation)(implicit
+      config: XinukConfig
+  ): Map[CellId, SignalMap] = {
     cells.keys.map { cellId =>
       val neighbourStates = cellNeighbours(cellId)
         .filter { case (_, id) => localCellIds.contains(id) }

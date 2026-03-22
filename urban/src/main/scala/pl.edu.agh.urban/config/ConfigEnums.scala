@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonValue
 
 import scala.annotation.meta.getter
 
-case class TileTypeId(@(JsonValue@getter) value: String) extends AnyVal
+case class TileTypeId(@(JsonValue @getter) value: String) extends AnyVal
 
 object TileTypeId {
   val None: TileTypeId = TileTypeId("None")
@@ -88,20 +88,53 @@ object TileTypeId {
   val GreeneryTallRoad: TileTypeId = TileTypeId("GreeneryTallRoad")
 
   val GreenerySchool: TileTypeId = TileTypeId("GreenerySchool")
-  
-  val values: Seq[TileTypeId] = Seq(TileTypeId.None, TileTypeId.BuildingResidential, TileTypeId.BuildingSocial,
-    TileTypeId.BuildingCommercial, TileTypeId.BuildingOffice, TileTypeId.BuildingHybrid, TileTypeId.BuildingAuxiliary,
-    TileTypeId.Garage, TileTypeId.SportField, TileTypeId.SidewalkCity, TileTypeId.SidewalkResidential,
-    TileTypeId.RoadAccess, TileTypeId.Road, TileTypeId.Wall, TileTypeId.Barren, TileTypeId.Garden,
-    TileTypeId.CafeGarden, TileTypeId.Square, TileTypeId.Park, TileTypeId.ParkingBuilding, TileTypeId.ParkingService,
-    TileTypeId.ParkingCollective, TileTypeId.StoreYard, TileTypeId.Playground, TileTypeId.Crossing, TileTypeId.Stop,
-    TileTypeId.SquareResidential, TileTypeId.Path, TileTypeId.PathCyclist, TileTypeId.PrivateArea, TileTypeId.Backstage,
-    TileTypeId.SchoolArea, TileTypeId.Tracks, TileTypeId.BuildingEntrance, TileTypeId.GarageEntrance,
-    TileTypeId.GreeneryLow, TileTypeId.GreeneryLowResidential, TileTypeId.GreeneryTall,
-    TileTypeId.GreeneryTallResidential, TileTypeId.GreeneryTallRoad, TileTypeId.GreenerySchool)
+
+  val values: Seq[TileTypeId] = Seq(
+    TileTypeId.None,
+    TileTypeId.BuildingResidential,
+    TileTypeId.BuildingSocial,
+    TileTypeId.BuildingCommercial,
+    TileTypeId.BuildingOffice,
+    TileTypeId.BuildingHybrid,
+    TileTypeId.BuildingAuxiliary,
+    TileTypeId.Garage,
+    TileTypeId.SportField,
+    TileTypeId.SidewalkCity,
+    TileTypeId.SidewalkResidential,
+    TileTypeId.RoadAccess,
+    TileTypeId.Road,
+    TileTypeId.Wall,
+    TileTypeId.Barren,
+    TileTypeId.Garden,
+    TileTypeId.CafeGarden,
+    TileTypeId.Square,
+    TileTypeId.Park,
+    TileTypeId.ParkingBuilding,
+    TileTypeId.ParkingService,
+    TileTypeId.ParkingCollective,
+    TileTypeId.StoreYard,
+    TileTypeId.Playground,
+    TileTypeId.Crossing,
+    TileTypeId.Stop,
+    TileTypeId.SquareResidential,
+    TileTypeId.Path,
+    TileTypeId.PathCyclist,
+    TileTypeId.PrivateArea,
+    TileTypeId.Backstage,
+    TileTypeId.SchoolArea,
+    TileTypeId.Tracks,
+    TileTypeId.BuildingEntrance,
+    TileTypeId.GarageEntrance,
+    TileTypeId.GreeneryLow,
+    TileTypeId.GreeneryLowResidential,
+    TileTypeId.GreeneryTall,
+    TileTypeId.GreeneryTallResidential,
+    TileTypeId.GreeneryTallRoad,
+    TileTypeId.GreenerySchool
+  )
 }
 
-case class TargetType(@(JsonValue@getter) value: String) extends AnyVal
+case class TargetType(@(JsonValue @getter) value: String) extends AnyVal
 
 object TargetType {
   val Parking: TargetType = TargetType("Parking")
@@ -122,11 +155,19 @@ object TargetType {
 
   val Social: TargetType = TargetType("Social")
 
-  val values: Seq[TargetType] = Seq(TargetType.Parking, TargetType.Bus, TargetType.Outside, TargetType.Playground,
-    TargetType.Wander, TargetType.Residential, TargetType.Service, TargetType.Social)
+  val values: Seq[TargetType] = Seq(
+    TargetType.Parking,
+    TargetType.Bus,
+    TargetType.Outside,
+    TargetType.Playground,
+    TargetType.Wander,
+    TargetType.Residential,
+    TargetType.Service,
+    TargetType.Social
+  )
 }
 
-case class TimeOfDay(@(JsonValue@getter) value: String) extends AnyVal
+case class TimeOfDay(@(JsonValue @getter) value: String) extends AnyVal
 
 object TimeOfDay {
   val Morning: TimeOfDay = TimeOfDay("Morning")
@@ -137,5 +178,6 @@ object TimeOfDay {
 
   val Evening: TimeOfDay = TimeOfDay("Evening")
 
-  val values: Seq[TimeOfDay] = Seq(TimeOfDay.Morning, TimeOfDay.Midday, TimeOfDay.Afternoon, TimeOfDay.Evening)
+  val values: Seq[TimeOfDay] =
+    Seq(TimeOfDay.Morning, TimeOfDay.Midday, TimeOfDay.Afternoon, TimeOfDay.Evening)
 }

@@ -20,11 +20,14 @@ import scala.swing.TabbedPane.Page
 import scala.swing._
 import scala.util.{Random, Try}
 
-class GridGuiActor private(worker: ActorRef,
-                           simulationId: String,
-                           workerId: WorkerId,
-                           bounds: GridWorldShard.Bounds)
-                          (implicit config: XinukConfig) extends Actor with ActorLogging {
+class GridGuiActor private (
+    worker: ActorRef,
+    simulationId: String,
+    workerId: WorkerId,
+    bounds: GridWorldShard.Bounds
+)(implicit config: XinukConfig)
+    extends Actor
+    with ActorLogging {
 
   override def receive: Receive = started
 
@@ -40,27 +43,32 @@ class GridGuiActor private(worker: ActorRef,
     gui.quit()
   }
 
-  def started: Receive = {
-    case GridInfo(iteration, cellColors, metrics) =>
-      gui.setNewValues(cellColors)
-      gui.updatePlot(iteration, metrics)
+  def started: Receive = { case GridInfo(iteration, cellColors, metrics) =>
+    gui.setNewValues(cellColors)
+    gui.updatePlot(iteration, metrics)
   }
 }
 
 object GridGuiActor {
-  def props(worker: ActorRef, simulationId: String, workerId: WorkerId, bounds: GridWorldShard.Bounds)
-           (implicit config: XinukConfig): Props = {
+  def props(
+      worker: ActorRef,
+      simulationId: String,
+      workerId: WorkerId,
+      bounds: GridWorldShard.Bounds
+  )(implicit config: XinukConfig): Props = {
     Props(new GridGuiActor(worker, simulationId, workerId, bounds))
   }
 }
 
-private[gui] class GuiGrid(bounds: GridWorldShard.Bounds, workerId: WorkerId)
-                          (implicit config: XinukConfig) extends SimpleSwingApplication {
+private[gui] class GuiGrid(bounds: GridWorldShard.Bounds, workerId: WorkerId)(implicit
+    config: XinukConfig
+) extends SimpleSwingApplication {
 
   Try(UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName))
 
   private val bgColor = new Color(220, 220, 220)
-  private val cellView = new ParticleCanvas(bounds.xMin, bounds.yMin, bounds.xSize, bounds.ySize, config.guiCellSize)
+  private val cellView =
+    new ParticleCanvas(bounds.xMin, bounds.yMin, bounds.xSize, bounds.ySize, config.guiCellSize)
   private val chartPanel = new BorderPanel {
     background = bgColor
   }
@@ -120,8 +128,10 @@ private[gui] class GuiGrid(bounds: GridWorldShard.Bounds, workerId: WorkerId)
     cellView.set(cellColors)
   }
 
-  private class ParticleCanvas(xOffset: Int, yOffset: Int, xSize: Int, ySize: Int, guiCellSize: Int) extends Label {
-    private val img = new BufferedImage(xSize * guiCellSize, ySize * guiCellSize, BufferedImage.TYPE_INT_ARGB)
+  private class ParticleCanvas(xOffset: Int, yOffset: Int, xSize: Int, ySize: Int, guiCellSize: Int)
+      extends Label {
+    private val img =
+      new BufferedImage(xSize * guiCellSize, ySize * guiCellSize, BufferedImage.TYPE_INT_ARGB)
 
     icon = new ImageIcon(img)
 
@@ -130,7 +140,15 @@ private[gui] class GuiGrid(bounds: GridWorldShard.Bounds, workerId: WorkerId)
         case (GridCellId(x, y), color) =>
           val startX = (x - xOffset) * guiCellSize
           val startY = (y - yOffset) * guiCellSize
-          img.setRGB(startX, startY, guiCellSize, guiCellSize, Array.fill(guiCellSize * guiCellSize)(color.getRGB), 0, guiCellSize)
+          img.setRGB(
+            startX,
+            startY,
+            guiCellSize,
+            guiCellSize,
+            Array.fill(guiCellSize * guiCellSize)(color.getRGB),
+            0,
+            guiCellSize
+          )
         case _ =>
       }
       this.repaint()
@@ -140,7 +158,14 @@ private[gui] class GuiGrid(bounds: GridWorldShard.Bounds, workerId: WorkerId)
   private val nameToSeries = mutable.Map.empty[String, XYSeries]
   private val dataset = new XYSeriesCollection()
   private val chart = ChartFactory.createXYLineChart(
-    "Iteration metrics chart", "X", "Y", dataset, PlotOrientation.VERTICAL, true, true, false
+    "Iteration metrics chart",
+    "X",
+    "Y",
+    dataset,
+    PlotOrientation.VERTICAL,
+    true,
+    true,
+    false
   )
   private val panel = new ChartPanel(chart)
   chartPanel.layout(swing.Component.wrap(panel)) = Center
@@ -165,4 +190,3 @@ private[gui] class GuiGrid(bounds: GridWorldShard.Bounds, workerId: WorkerId)
 object GuiGrid {
   final val MaximumPlotSize = 400
 }
-

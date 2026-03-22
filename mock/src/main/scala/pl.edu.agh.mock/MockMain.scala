@@ -26,13 +26,12 @@ object MockMain extends LazyLogging {
     ).start()
   }
 
-  private def cellToColor: PartialFunction[CellState, Color] = {
-    case cellState =>
-      cellState.contents match {
-        case Mock => Color.WHITE
-        case Obstacle => Color.BLUE
-        case _ => cellToColorRegions(cellState)
-      }
+  private def cellToColor: PartialFunction[CellState, Color] = { case cellState =>
+    cellState.contents match {
+      case Mock     => Color.WHITE
+      case Obstacle => Color.BLUE
+      case _        => cellToColorRegions(cellState)
+    }
   }
 
   private def cellToColorRegions(cellState: CellState): Color = {
@@ -65,4 +64,3 @@ object MockMain extends LazyLogging {
     Color.getHSBColor(hue, saturation, brightness)
   }
 }
-

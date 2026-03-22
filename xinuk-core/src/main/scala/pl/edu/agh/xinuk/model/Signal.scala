@@ -4,7 +4,6 @@ import pl.edu.agh.xinuk.config.XinukConfig
 
 import scala.math.Ordering
 
-
 final case class Signal(value: Double) extends AnyVal with Ordered[Signal] {
   def +(other: Signal): Signal = Signal(value + other.value)
 

@@ -22,7 +22,8 @@ object GridDirection {
 
   implicit val ordering: Ordering[GridDirection] = Ordering.by(values.indexOf(_))
 
-  private val valuesSeq: Seq[GridDirection] = Seq(Top, TopRight, Right, BottomRight, Bottom, BottomLeft, Left, TopLeft)
+  private val valuesSeq: Seq[GridDirection] =
+    Seq(Top, TopRight, Right, BottomRight, Bottom, BottomLeft, Left, TopLeft)
 
   implicit def values: Seq[GridDirection] = valuesSeq
 
@@ -43,11 +44,14 @@ object GridDirection {
 
   private val distanceMap: Map[GridDirection, Map[GridDirection, Int]] = values.map { direction =>
     val idx = values.indexOf(direction)
-    (direction, values.map { otherDirection =>
-      val otherIdx = values.indexOf(otherDirection)
-      val distance = math.min(math.abs(idx - otherIdx), values.size - math.abs(idx - otherIdx))
-      (otherDirection, distance)
-    }.toMap)
+    (
+      direction,
+      values.map { otherDirection =>
+        val otherIdx = values.indexOf(otherDirection)
+        val distance = math.min(math.abs(idx - otherIdx), values.size - math.abs(idx - otherIdx))
+        (otherDirection, distance)
+      }.toMap
+    )
   }.toMap
 
   private val diagonals: Set[GridDirection] = Set(TopRight, BottomRight, BottomLeft, TopLeft)
@@ -58,7 +62,8 @@ object GridDirection {
 
   private def isDiagonal(direction: GridDirection): Boolean = diagonals.contains(direction)
 
-  private def stepsBetween(direction: GridDirection, other: GridDirection): Int = distanceMap(direction)(other)
+  private def stepsBetween(direction: GridDirection, other: GridDirection): Int =
+    distanceMap(direction)(other)
 
   private def clockwise(direction: GridDirection): GridDirection = {
     val idx: Int = values.indexOf(direction)

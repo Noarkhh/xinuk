@@ -4,17 +4,17 @@ import pl.edu.agh.xinuk.algorithm.Metrics
 import pl.edu.agh.xinuk.model.grid.GridCellId
 
 final case class UrbanMetrics(
-                               travelBeginnings: Long,
-                               travelEnds: Long,
-                               wanderBeginnings: Long,
-                               wanderEnds: Long,
-                               returnBeginnings: Long,
-                               returnEnds: Long,
-                               closeViolationCount: Long,
-                               farViolationCount: Long,
-                               closeViolationLocations: Seq[GridCellId],
-                               farViolationLocations: Seq[GridCellId]
-                             ) extends Metrics {
+    travelBeginnings: Long,
+    travelEnds: Long,
+    wanderBeginnings: Long,
+    wanderEnds: Long,
+    returnBeginnings: Long,
+    returnEnds: Long,
+    closeViolationCount: Long,
+    farViolationCount: Long,
+    closeViolationLocations: Seq[GridCellId],
+    farViolationLocations: Seq[GridCellId]
+) extends Metrics {
 
   private def idToString(id: GridCellId): String = s"(${id.x},${id.y})"
 
@@ -33,9 +33,20 @@ final case class UrbanMetrics(
 
   override def +(other: Metrics): UrbanMetrics = other match {
     case UrbanMetrics.Empty => this
-    case UrbanMetrics(otherTravelBeginnings, otherTravelEnds, otherWanderBeginnings, otherWanderEnds, otherReturnBeginnings, otherReturnEnds,
-    otherCloseViolationCount, otherFarViolationCount, otherCloseViolationLocations, otherFarViolationLocations) =>
-      UrbanMetrics(travelBeginnings + otherTravelBeginnings,
+    case UrbanMetrics(
+          otherTravelBeginnings,
+          otherTravelEnds,
+          otherWanderBeginnings,
+          otherWanderEnds,
+          otherReturnBeginnings,
+          otherReturnEnds,
+          otherCloseViolationCount,
+          otherFarViolationCount,
+          otherCloseViolationLocations,
+          otherFarViolationLocations
+        ) =>
+      UrbanMetrics(
+        travelBeginnings + otherTravelBeginnings,
         travelEnds + otherTravelEnds,
         wanderBeginnings + otherWanderBeginnings,
         wanderEnds + otherWanderEnds,
@@ -44,8 +55,10 @@ final case class UrbanMetrics(
         closeViolationCount + otherCloseViolationCount,
         farViolationCount + otherFarViolationCount,
         closeViolationLocations ++ otherCloseViolationLocations,
-        farViolationLocations ++ otherFarViolationLocations)
-    case _ => throw new UnsupportedOperationException(s"Cannot add non-UrbanMetrics to UrbanMetrics")
+        farViolationLocations ++ otherFarViolationLocations
+      )
+    case _ =>
+      throw new UnsupportedOperationException(s"Cannot add non-UrbanMetrics to UrbanMetrics")
   }
 }
 
@@ -85,7 +98,9 @@ object UrbanMetrics {
 
   def returnEnd: UrbanMetrics = ReturnEnd
 
-  def closeViolation(location: GridCellId): UrbanMetrics = UrbanMetrics(0, 0, 0, 0, 0, 0, 1, 0, Seq(location), Seq.empty)
+  def closeViolation(location: GridCellId): UrbanMetrics =
+    UrbanMetrics(0, 0, 0, 0, 0, 0, 1, 0, Seq(location), Seq.empty)
 
-  def farViolation(location: GridCellId): UrbanMetrics = UrbanMetrics(0, 0, 0, 0, 0, 0, 0, 1, Seq.empty, Seq(location))
+  def farViolation(location: GridCellId): UrbanMetrics =
+    UrbanMetrics(0, 0, 0, 0, 0, 0, 0, 1, Seq.empty, Seq(location))
 }

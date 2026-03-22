@@ -9,7 +9,6 @@ object RabbitsUpdate {
 
   case object KeepLettuce extends Update
 
-
   case object CreateRabbit extends Update
 
   case class KeepRabbit(rabbit: Rabbit) extends Update

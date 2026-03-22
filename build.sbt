@@ -14,26 +14,28 @@ val Version = new {
   val JacksonScala = "2.11.2"
 }
 
-inThisBuild(Seq(
-  organization := "pl.edu.agh",
-  version := "1.1-SNAPSHOT",
-  scalaVersion := "2.13.3",
+inThisBuild(
+  Seq(
+    organization := "pl.edu.agh",
+    version := "1.1-SNAPSHOT",
+    scalaVersion := "2.13.17",
+    scalacOptions ++= Seq(
+      "-feature",
+      "-deprecation",
+      "-unchecked",
+      "-language:implicitConversions",
+      "-language:existentials",
+      "-language:dynamics",
+      "-language:experimental.macros",
+      "-language:higherKinds",
+      "-Xfatal-warnings",
+      "-Xlint:-missing-interpolator,-adapted-args,-unused,_"
+    )
+  )
+)
 
-  scalacOptions ++= Seq(
-    "-feature",
-    "-deprecation",
-    "-unchecked",
-    "-language:implicitConversions",
-    "-language:existentials",
-    "-language:dynamics",
-    "-language:experimental.macros",
-    "-language:higherKinds",
-    "-Xfatal-warnings",
-    "-Xlint:-missing-interpolator,-adapted-args,-unused,_"
-  ),
-))
-
-lazy val xinuk = project.in(file("."))
+lazy val xinuk = project
+  .in(file("."))
   .aggregate(`xinuk-core`, rabbits, fortwist, torch, mock, urban)
   .disablePlugins(AssemblyPlugin)
 
@@ -54,9 +56,10 @@ lazy val `xinuk-core` = project
       "org.jfree" % "jfreechart" % Version.JFreeChart,
       "org.scalatest" %% "scalatest" % Version.ScalaTest % Test,
       "com.typesafe.akka" %% "akka-testkit" % Version.Akka % Test,
-      "org.mockito" % "mockito-core" % Version.Mockito % Test,
-    ),
-  ).disablePlugins(AssemblyPlugin)
+      "org.mockito" % "mockito-core" % Version.Mockito % Test
+    )
+  )
+  .disablePlugins(AssemblyPlugin)
 
 def modelProject(projectName: String)(mainClassName: String): Project = {
   Project(projectName, file(projectName))
@@ -66,18 +69,19 @@ def modelProject(projectName: String)(mainClassName: String): Project = {
         "ch.qos.logback" % "logback-classic" % Version.Logback,
         "org.scalatest" %% "scalatest" % Version.ScalaTest % Test,
         "com.typesafe.akka" %% "akka-testkit" % Version.Akka % Test,
-        "org.mockito" % "mockito-core" % Version.Mockito % Test,
+        "org.mockito" % "mockito-core" % Version.Mockito % Test
       ),
       mainClass in assembly := Some(mainClassName),
       assemblyJarName in assembly := s"$projectName.jar",
       test in assembly := {},
       assemblyMergeStrategy in assembly := {
         case "module-info.class" => MergeStrategy.first
-        case x =>
+        case x                   =>
           val oldStrategy = (assemblyMergeStrategy in assembly).value
           oldStrategy(x)
       }
-    ).dependsOn(`xinuk-core`)
+    )
+    .dependsOn(`xinuk-core`)
 }
 
 lazy val rabbits = modelProject("rabbits")("pl.edu.agh.rabbits.RabbitsMain")

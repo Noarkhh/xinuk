@@ -9,14 +9,18 @@ import pl.edu.agh.xinuk.model.grid.{GridCellId, GridWorldBuilder}
 object MockWorldCreator extends WorldCreator[MockConfig] {
 
   override def prepareWorld()(implicit config: MockConfig): GridWorldBuilder = {
-    val worldBuilder: GridWorldBuilder = GridWorldBuilder().withGridConnections()//.withWrappedBoundaries()
+    val worldBuilder: GridWorldBuilder =
+      GridWorldBuilder().withGridConnections() // .withWrappedBoundaries()
 
     makeGrid(3, worldBuilder)
 
     worldBuilder
   }
 
-  private def makeGrid(n: Int, worldBuilder: GridWorldBuilder)(implicit config: MockConfig): Unit = {
+  private def makeGrid(
+      n: Int,
+      worldBuilder: GridWorldBuilder
+  )(implicit config: MockConfig): Unit = {
     val xUnit = config.worldWidth / (n + 1)
     val yUnit = config.worldHeight / (n + 1)
     for {

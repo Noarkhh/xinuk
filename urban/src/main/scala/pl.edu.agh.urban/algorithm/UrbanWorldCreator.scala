@@ -10,7 +10,6 @@ import pl.edu.agh.xinuk.model.grid.{GridCellId, GridWorldBuilder}
 
 object UrbanWorldCreator extends WorldCreator[UrbanConfig] {
 
-
   override def prepareWorld()(implicit config: UrbanConfig): GridWorldBuilder = {
     val worldBuilder: GridWorldBuilder = GridWorldBuilder().withGridConnections()
     loadMap(worldBuilder)
@@ -30,16 +29,19 @@ object UrbanWorldCreator extends WorldCreator[UrbanConfig] {
     } {
       val rgb = img.getRGB(x, y)
       val color = new Color(
-        (rgb >> 16) & 0xFF,
-        (rgb >> 8) & 0xFF,
-        rgb & 0xFF
+        (rgb >> 16) & 0xff,
+        (rgb >> 8) & 0xff,
+        rgb & 0xff
       )
       worldBuilder(GridCellId(x, y)) = CellState(UrbanCell(config.colorToTileType(color)))
     }
   }
 
-  private def createSignalSources(worldBuilder: GridWorldBuilder)(implicit config: UrbanConfig): Unit = {
-    val entranceIds: Set[GridCellId] = config.targets.find(_.id == config.pathCreation).get.entrances.map(_.gridId).toSet
+  private def createSignalSources(
+      worldBuilder: GridWorldBuilder
+  )(implicit config: UrbanConfig): Unit = {
+    val entranceIds: Set[GridCellId] =
+      config.targets.find(_.id == config.pathCreation).get.entrances.map(_.gridId).toSet
     entranceIds.foreach { id =>
       worldBuilder(id).updateContents(SignalSourceCell())
     }
@@ -55,22 +57,23 @@ object UrbanWorldCreator extends WorldCreator[UrbanConfig] {
 
         Seq.tabulate(parts) {
           case index if index < remainder => quotient + 1
-          case _ => quotient
+          case _                          => quotient
         }
       }
     }
 
-    config.targets.foreach {
-      target =>
-        val population = target.population.getOrElse("residential", 0)
-        val entrancesNumber = target.entrances.size
+    config.targets.foreach { target =>
+      val population = target.population.getOrElse("residential", 0)
+      val entrancesNumber = target.entrances.size
 
-        target.entrances.zip(split(population, entrancesNumber)).foreach {
-          case (entranceCoordinates, entrancePopulation) =>
-            val oldCell = worldBuilder(entranceCoordinates.gridId).state.contents.asInstanceOf[UrbanCell]
-            val entrance = Entrance(target.id, target.targetTypes, entrancePopulation)
-            worldBuilder(entranceCoordinates.gridId) = CellState(oldCell.copy(entrances = oldCell.entrances :+ entrance))
-        }
+      target.entrances.zip(split(population, entrancesNumber)).foreach {
+        case (entranceCoordinates, entrancePopulation) =>
+          val oldCell =
+            worldBuilder(entranceCoordinates.gridId).state.contents.asInstanceOf[UrbanCell]
+          val entrance = Entrance(target.id, target.targetTypes, entrancePopulation)
+          worldBuilder(entranceCoordinates.gridId) =
+            CellState(oldCell.copy(entrances = oldCell.entrances :+ entrance))
+      }
     }
   }
 }

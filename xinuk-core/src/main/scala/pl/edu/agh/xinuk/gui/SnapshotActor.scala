@@ -12,15 +12,16 @@ import java.io.File
 import javax.imageio.ImageIO
 import scala.collection.mutable
 
-class SnapshotActor private(worker: ActorRef,
-                            simulationId: String,
-                            workerIds: Set[WorkerId])
-                           (implicit config: XinukConfig) extends Actor with ActorLogging {
+class SnapshotActor private (worker: ActorRef, simulationId: String, workerIds: Set[WorkerId])(
+    implicit config: XinukConfig
+) extends Actor
+    with ActorLogging {
 
   override def receive: Receive = started
 
   private lazy val snapshotSaver: SnapshotSaver = new SnapshotSaver(simulationId)
-  val cellColorsStash: mutable.Map[Long, Seq[Seq[(CellId, Color)]]] = mutable.Map.empty.withDefaultValue(Seq.empty)
+  val cellColorsStash: mutable.Map[Long, Seq[Seq[(CellId, Color)]]] =
+    mutable.Map.empty.withDefaultValue(Seq.empty)
 
   override def preStart(): Unit = {
     workerIds.foreach(worker ! MsgWrapper(_, SubscribeGridInfo()))
@@ -31,19 +32,19 @@ class SnapshotActor private(worker: ActorRef,
     log.info("GUI stopped")
   }
 
-  def started: Receive = {
-    case GridInfo(iteration, cellColors, _) =>
-      cellColorsStash(iteration) :+= cellColors.toSeq
-      if (cellColorsStash(iteration).size == workerIds.size) {
-        snapshotSaver.snapshot(iteration, cellColorsStash(iteration).flatten.toMap)
-        cellColorsStash.remove(iteration)
-      }
+  def started: Receive = { case GridInfo(iteration, cellColors, _) =>
+    cellColorsStash(iteration) :+= cellColors.toSeq
+    if (cellColorsStash(iteration).size == workerIds.size) {
+      snapshotSaver.snapshot(iteration, cellColorsStash(iteration).flatten.toMap)
+      cellColorsStash.remove(iteration)
+    }
   }
 }
 
 object SnapshotActor {
-  def props(worker: ActorRef, simulationId: String, workerIds: Set[WorkerId])
-           (implicit config: XinukConfig): Props = {
+  def props(worker: ActorRef, simulationId: String, workerIds: Set[WorkerId])(implicit
+      config: XinukConfig
+  ): Props = {
     Props(new SnapshotActor(worker, simulationId, workerIds))
   }
 }
@@ -51,14 +52,25 @@ object SnapshotActor {
 private class SnapshotSaver(simulationId: String)(implicit config: XinukConfig) {
   private val snapshotDirectory = new File(s"out/snapshots/$simulationId")
   snapshotDirectory.mkdirs()
-  private val img = new BufferedImage(config.worldWidth * config.guiCellSize, config.worldHeight * config.guiCellSize, BufferedImage.TYPE_INT_ARGB)
-
+  private val img = new BufferedImage(
+    config.worldWidth * config.guiCellSize,
+    config.worldHeight * config.guiCellSize,
+    BufferedImage.TYPE_INT_ARGB
+  )
 
   private def fillImage(cellColors: Map[CellId, Color]): Unit = cellColors.foreach {
     case (GridCellId(x, y), color) =>
       val startX = x * config.guiCellSize
       val startY = y * config.guiCellSize
-      img.setRGB(startX, startY, config.guiCellSize, config.guiCellSize, Array.fill(config.guiCellSize * config.guiCellSize)(color.getRGB), 0, config.guiCellSize)
+      img.setRGB(
+        startX,
+        startY,
+        config.guiCellSize,
+        config.guiCellSize,
+        Array.fill(config.guiCellSize * config.guiCellSize)(color.getRGB),
+        0,
+        config.guiCellSize
+      )
     case _ =>
   }
 
@@ -68,8 +80,3 @@ private class SnapshotSaver(simulationId: String)(implicit config: XinukConfig) 
     ImageIO.write(img, "png", snapshotFile)
   }
 }
-
-
-
-
-

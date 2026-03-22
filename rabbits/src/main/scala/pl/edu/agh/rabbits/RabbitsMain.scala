@@ -3,7 +3,12 @@ package pl.edu.agh.rabbits
 import java.awt.Color
 
 import com.typesafe.scalalogging.LazyLogging
-import pl.edu.agh.rabbits.algorithm.{RabbitsMetrics, RabbitsPlanCreator, RabbitsPlanResolver, RabbitsWorldCreator}
+import pl.edu.agh.rabbits.algorithm.{
+  RabbitsMetrics,
+  RabbitsPlanCreator,
+  RabbitsPlanResolver,
+  RabbitsWorldCreator
+}
 import pl.edu.agh.rabbits.model.{Lettuce, Rabbit}
 import pl.edu.agh.xinuk.Simulation
 import pl.edu.agh.xinuk.model.CellState
@@ -26,13 +31,11 @@ object RabbitsMain extends LazyLogging {
     ).start()
   }
 
-  private def cellToColor: PartialFunction[CellState, Color] = {
-    case cellState =>
-      cellState.contents match {
-        case _: Rabbit => new Color(139, 69, 19)
-        case _: Lettuce => new Color(0, 128, 0)
-        case _ => Color.WHITE
-      }
+  private def cellToColor: PartialFunction[CellState, Color] = { case cellState =>
+    cellState.contents match {
+      case _: Rabbit  => new Color(139, 69, 19)
+      case _: Lettuce => new Color(0, 128, 0)
+      case _          => Color.WHITE
+    }
   }
 }
-

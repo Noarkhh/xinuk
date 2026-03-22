@@ -2,11 +2,13 @@ package pl.edu.agh.torch.algorithm
 
 import pl.edu.agh.xinuk.algorithm.Metrics
 
-final case class TorchMetrics(peopleCount: Long,
-                              fireCount: Long,
-                              exitCount: Long,
-                              peopleDeaths: Long,
-                              peopleEscapes: Long) extends Metrics {
+final case class TorchMetrics(
+    peopleCount: Long,
+    fireCount: Long,
+    exitCount: Long,
+    peopleDeaths: Long,
+    peopleEscapes: Long
+) extends Metrics {
   override def log: String = {
     s"$peopleCount;$fireCount;$exitCount;$peopleDeaths;$peopleEscapes"
   }
@@ -22,10 +24,22 @@ final case class TorchMetrics(peopleCount: Long,
   override def +(other: Metrics): TorchMetrics = {
     other match {
       case TorchMetrics.Empty => this
-      case TorchMetrics(otherPeopleCount, otherFireCount, otherExitCount, otherPeopleDeaths, otherPeopleEscapes) =>
-        TorchMetrics(peopleCount + otherPeopleCount, fireCount + otherFireCount, exitCount + otherExitCount,
-          peopleDeaths + otherPeopleDeaths, peopleEscapes + otherPeopleEscapes)
-      case _ => throw new UnsupportedOperationException(s"Cannot add: non-TorchMetrics to TorchMetrics")
+      case TorchMetrics(
+            otherPeopleCount,
+            otherFireCount,
+            otherExitCount,
+            otherPeopleDeaths,
+            otherPeopleEscapes
+          ) =>
+        TorchMetrics(
+          peopleCount + otherPeopleCount,
+          fireCount + otherFireCount,
+          exitCount + otherExitCount,
+          peopleDeaths + otherPeopleDeaths,
+          peopleEscapes + otherPeopleEscapes
+        )
+      case _ =>
+        throw new UnsupportedOperationException(s"Cannot add: non-TorchMetrics to TorchMetrics")
     }
   }
 }

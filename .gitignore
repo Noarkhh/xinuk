@@ -33,3 +33,6 @@ gen
 /venv/
 /urbanData/
 /.bsp/
+.bloop/
+/.metals/
+metals.sbt

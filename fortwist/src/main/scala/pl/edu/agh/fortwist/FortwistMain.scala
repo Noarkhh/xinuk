@@ -3,7 +3,12 @@ package pl.edu.agh.fortwist
 import java.awt.Color
 
 import com.typesafe.scalalogging.LazyLogging
-import pl.edu.agh.fortwist.algorithm.{FortwistMetrics, FortwistPlanCreator, FortwistPlanResolver, FortwistWorldCreator}
+import pl.edu.agh.fortwist.algorithm.{
+  FortwistMetrics,
+  FortwistPlanCreator,
+  FortwistPlanResolver,
+  FortwistWorldCreator
+}
 import pl.edu.agh.fortwist.config.FortwistConfig
 import pl.edu.agh.fortwist.model.Seabed
 import pl.edu.agh.xinuk.Simulation

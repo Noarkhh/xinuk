@@ -23,40 +23,33 @@ LEC - lettuce energetic capacity; LEC ∈ [0,1] && LEC ∈ R.
  */
 
 final case class RabbitsConfig(
-                                worldType: WorldType,
-                                worldWidth: Int,
-                                worldHeight: Int,
-                                iterationsNumber: Long,
-                                iterationFinishedLogFrequency: Long,
-                                skipEmptyLogs: Boolean,
-
-                                signalSuppressionFactor: Double,
-                                signalAttenuationFactor: Double,
-                                signalDisabled: Boolean,
-
-                                workersX: Int,
-                                workersY: Int,
-                                isSupervisor: Boolean,
-                                shardingMod: Int,
-
-                                guiType: GuiType,
-                                guiCellSize: Int,
-                                guiStartIteration: Long,
-                                guiUpdateFrequency: Long,
-
-                                spawnChance: Double,
-                                rabbitSpawnChance: Double,
-
-                                rabbitInitialSignal: Signal,
-                                lettuceInitialSignal: Signal,
-
-                                rabbitStartEnergy: Double,
-                                rabbitReproductionCost: Double,
-                                rabbitReproductionThreshold: Double,
-                                rabbitLifeActivityCost: Double,
-
-                                lettuceEnergeticCapacity: Double,
-                                lettuceReproductionFrequency: Int,
-                              ) extends XinukConfig {
+    worldType: WorldType,
+    worldWidth: Int,
+    worldHeight: Int,
+    iterationsNumber: Long,
+    iterationFinishedLogFrequency: Long,
+    skipEmptyLogs: Boolean,
+    signalSuppressionFactor: Double,
+    signalAttenuationFactor: Double,
+    signalDisabled: Boolean,
+    workersX: Int,
+    workersY: Int,
+    isSupervisor: Boolean,
+    shardingMod: Int,
+    guiType: GuiType,
+    guiCellSize: Int,
+    guiStartIteration: Long,
+    guiUpdateFrequency: Long,
+    spawnChance: Double,
+    rabbitSpawnChance: Double,
+    rabbitInitialSignal: Signal,
+    lettuceInitialSignal: Signal,
+    rabbitStartEnergy: Double,
+    rabbitReproductionCost: Double,
+    rabbitReproductionThreshold: Double,
+    rabbitLifeActivityCost: Double,
+    lettuceEnergeticCapacity: Double,
+    lettuceReproductionFrequency: Int
+) extends XinukConfig {
   val random: Random = new SecureRandom
 }
