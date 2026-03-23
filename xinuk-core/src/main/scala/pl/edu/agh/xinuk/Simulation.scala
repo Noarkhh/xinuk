@@ -10,7 +10,7 @@ import com.typesafe.scalalogging.LazyLogging
 import net.ceedubs.ficus.readers.ValueReader
 import pl.edu.agh.xinuk.algorithm.{Metrics, PlanCreator, PlanResolver, WorldCreator}
 import pl.edu.agh.xinuk.config.{GuiType, XinukConfig, CellGuiPayload}
-import pl.edu.agh.xinuk.gui.{GridGuiActor, SnapshotActor, SplitSnapshotActor}
+import pl.edu.agh.xinuk.gui.{GridGuiActor, SnapshotActor, SplitSnapshotActor, ParticlesGuiActor}
 import pl.edu.agh.xinuk.simulation.WorkerActor.GridInfo
 import pl.edu.agh.xinuk.simulation.{GridInfoCellPayload}
 import pl.edu.agh.xinuk.model._
@@ -111,6 +111,18 @@ class Simulation[ConfigType <: XinukConfig: ValueReader](
           })
         case (GuiType.Snapshot, GridWorldType) =>
           system.actorOf(SnapshotActor.props(workerRegionRef, simulationId, workerToWorld.keySet))
+        case (GuiType.Particles, GridWorldType) =>
+          workerToWorld.foreach({ case (workerId, world) =>
+            system.actorOf(
+              ParticlesGuiActor.props(
+                workerRegionRef,
+                simulationId,
+                workerId,
+                world.asInstanceOf[GridWorldShard].bounds
+              )
+            )
+          })
+
         case _ => logger.warn("GUI type not recognized or incompatible with World format.")
       }
     }

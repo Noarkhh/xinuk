@@ -9,7 +9,7 @@ import org.jfree.chart.plot.PlotOrientation
 import org.jfree.chart.{ChartFactory, ChartPanel}
 import org.jfree.data.xy.{XYSeries, XYSeriesCollection}
 import pl.edu.agh.xinuk.algorithm.Metrics
-import pl.edu.agh.xinuk.config.{XinukConfig, CellGuiPayloadColor}
+import pl.edu.agh.xinuk.config.XinukConfig
 import pl.edu.agh.xinuk.model._
 import pl.edu.agh.xinuk.model.grid.{GridCellId, GridWorldShard}
 import pl.edu.agh.xinuk.simulation.WorkerActor.{GridInfo, MsgWrapper, SubscribeGridInfo}
@@ -45,9 +45,8 @@ class GridGuiActor private (
   }
 
   def started: Receive = { case GridInfo(iteration, cellPayloads, metrics) =>
-    val cellColors = cellPayloads.map({
-      case (cellId, GridInfoCellColor(color)) => (cellId, color)
-      case (cellId, _)                        => (cellId, Color.WHITE)
+    val cellColors = cellPayloads.map({ case (cellId, cellPayload) =>
+      (cellId, cellPayload.asInstanceOf[GridInfoCellColor].color)
     })
     gui.setNewValues(cellColors)
     gui.updatePlot(iteration, metrics)

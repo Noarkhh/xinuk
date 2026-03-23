@@ -15,6 +15,8 @@ import scala.util.Random
 trait GridInfoCellPayload
 
 final case class GridInfoCellColor(color: Color) extends GridInfoCellPayload
+case class Particle(x: Double, y: Double)
+final case class GridInfoCellParticles(particles: Set[(Double, Double)]) extends GridInfoCellPayload
 
 class WorkerActor[ConfigType <: XinukConfig](
     regionRef: => ActorRef,
