@@ -13,6 +13,8 @@ import pl.edu.agh.rabbits.model.{Lettuce, Rabbit}
 import pl.edu.agh.xinuk.Simulation
 import pl.edu.agh.xinuk.model.CellState
 import pl.edu.agh.xinuk.model.grid.GridSignalPropagation
+import pl.edu.agh.xinuk.simulation.GridInfoCellColor
+import pl.edu.agh.xinuk.algorithm.Metrics
 
 object RabbitsMain extends LazyLogging {
   private val configPrefix = "rabbits"
@@ -27,15 +29,26 @@ object RabbitsMain extends LazyLogging {
       RabbitsPlanResolver,
       RabbitsMetrics.empty,
       GridSignalPropagation.Standard,
-      cellToColor
+      cellStatePayloader
     ).start()
   }
 
-  private def cellToColor: PartialFunction[CellState, Color] = { case cellState =>
-    cellState.contents match {
-      case _: Rabbit  => new Color(139, 69, 19)
+  private def cellStatePayloader(cellState: CellState): GridInfoCellColor = {
+    GridInfoCellColor(cellState.contents match {
+      case _: Rabbit  => new Color(140, 69, 19)
       case _: Lettuce => new Color(0, 128, 0)
       case _          => Color.WHITE
-    }
+    })
   }
+
+  // private def cellToPayload(cellState: CellState): CellGuiPayload = {
+  //   val color =
+  //     cellState.contents match {
+  //       case _: Rabbit  => new Color(140, 69, 19)
+  //       case _: Lettuce => new Color(0, 128, 0)
+  //       case _          => Color.WHITE
+  //     }
+  //
+  //   CellGuiPayloadColor(color)
+  // }
 }

@@ -2,6 +2,7 @@ package pl.edu.agh.xinuk.config
 
 import com.avsystem.commons.misc.{AbstractNamedEnumCompanion, NamedEnum}
 import pl.edu.agh.xinuk.model.WorldType
+import java.awt.Color
 
 trait XinukConfig {
   def worldType: WorldType
@@ -25,6 +26,10 @@ trait XinukConfig {
   def guiStartIteration: Long
   def guiUpdateFrequency: Long
 }
+
+trait CellGuiPayload
+
+final case class CellGuiPayloadColor(color: Color) extends CellGuiPayload
 
 sealed trait GuiType extends NamedEnum
 

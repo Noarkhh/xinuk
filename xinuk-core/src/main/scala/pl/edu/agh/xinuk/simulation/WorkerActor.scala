@@ -12,13 +12,17 @@ import java.security.SecureRandom
 import scala.collection.mutable
 import scala.util.Random
 
+trait GridInfoCellPayload
+
+final case class GridInfoCellColor(color: Color) extends GridInfoCellPayload
+
 class WorkerActor[ConfigType <: XinukConfig](
     regionRef: => ActorRef,
     planCreator: PlanCreator[ConfigType],
     planResolver: PlanResolver[ConfigType],
     emptyMetrics: => Metrics,
     signalPropagation: SignalPropagation,
-    cellToColor: PartialFunction[CellState, Color]
+    cellStatePayloader: CellState => GridInfoCellPayload
 )(implicit config: ConfigType)
     extends Actor
     with Stash {
@@ -153,8 +157,10 @@ class WorkerActor[ConfigType <: XinukConfig](
           if (
             guiActors.nonEmpty && iteration >= config.guiStartIteration && (iteration - config.guiStartIteration) % config.guiUpdateFrequency == 0
           ) {
-            val cellColors = cellsToColors(worldShard.localCellIds.map(worldShard.cells(_)))
-            guiActors.foreach(_ ! GridInfo(iteration, cellColors, iterationMetrics))
+            val cellPayloads = payloadCellStates(worldShard.localCellIds.map(worldShard.cells(_)))
+            guiActors.foreach(
+              _ ! GridInfo(iteration, cellPayloads, iterationMetrics)
+            )
           }
           if (iteration % config.iterationFinishedLogFrequency == 0) {
             logger.info(s"finished $iteration")
@@ -310,8 +316,10 @@ class WorkerActor[ConfigType <: XinukConfig](
           Color.getHSBColor(hue, saturation, luminance)
       }
 
-  private def cellsToColors(cells: Set[Cell]): Map[CellId, Color] = cells.map { cell =>
-    cell.id -> cellToColor.applyOrElse(cell.state, defaultColor)
+  private def payloadCellStates(cells: Set[Cell]): Map[CellId, GridInfoCellPayload] = cells.map {
+    cell =>
+      cell.id -> cellStatePayloader(cell.state)
+      // cell => cell.id -> CellGuiPayloadColor(cellToColor.applyOrElse(cell.state, defaultColor))
   }.toMap
 
   private def logMetrics(iteration: Long, metrics: Metrics): Unit = {
@@ -348,7 +356,7 @@ object WorkerActor {
       planResolver: PlanResolver[ConfigType],
       emptyMetrics: => Metrics,
       signalPropagation: SignalPropagation,
-      cellToColor: PartialFunction[CellState, Color]
+      cellStatePayloader: CellState => GridInfoCellPayload
   )(implicit config: ConfigType): Props = {
     Props(
       new WorkerActor(
@@ -357,7 +365,7 @@ object WorkerActor {
         planResolver,
         emptyMetrics,
         signalPropagation,
-        cellToColor
+        cellStatePayloader
       )
     )
   }
@@ -373,11 +381,15 @@ object WorkerActor {
     (id.value.toString, msg)
   }
 
+  final case class GridInfo(
+      iteration: Long,
+      cellColors: Map[CellId, GridInfoCellPayload],
+      metrics: Metrics
+  )
+
   final case class MsgWrapper(id: WorkerId, value: Any)
 
   final case class SubscribeGridInfo()
-
-  final case class GridInfo(iteration: Long, cellColors: Map[CellId, Color], metrics: Metrics)
 
   final case class WorkerInitialized(world: WorldShard)
 

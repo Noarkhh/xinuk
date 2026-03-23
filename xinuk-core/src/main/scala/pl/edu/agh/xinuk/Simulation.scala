@@ -9,8 +9,10 @@ import com.typesafe.config.{Config, ConfigFactory, ConfigRenderOptions}
 import com.typesafe.scalalogging.LazyLogging
 import net.ceedubs.ficus.readers.ValueReader
 import pl.edu.agh.xinuk.algorithm.{Metrics, PlanCreator, PlanResolver, WorldCreator}
-import pl.edu.agh.xinuk.config.{GuiType, XinukConfig}
+import pl.edu.agh.xinuk.config.{GuiType, XinukConfig, CellGuiPayload}
 import pl.edu.agh.xinuk.gui.{GridGuiActor, SnapshotActor, SplitSnapshotActor}
+import pl.edu.agh.xinuk.simulation.WorkerActor.GridInfo
+import pl.edu.agh.xinuk.simulation.{GridInfoCellPayload}
 import pl.edu.agh.xinuk.model._
 import pl.edu.agh.xinuk.model.grid.{GridWorldShard, GridWorldType}
 import pl.edu.agh.xinuk.simulation.WorkerActor
@@ -25,7 +27,7 @@ class Simulation[ConfigType <: XinukConfig: ValueReader](
     planResolverFactory: () => PlanResolver[ConfigType],
     emptyMetrics: => Metrics,
     signalPropagation: SignalPropagation,
-    cellToColor: PartialFunction[CellState, Color] = PartialFunction.empty
+    cellStatePayloader: CellState => GridInfoCellPayload
 ) extends LazyLogging {
 
   private val rawConfig: Config =
@@ -67,7 +69,7 @@ class Simulation[ConfigType <: XinukConfig: ValueReader](
       planResolverFactory(),
       emptyMetrics,
       signalPropagation,
-      cellToColor
+      cellStatePayloader
     ),
     settings = ClusterShardingSettings(system),
     extractShardId = WorkerActor.extractShardId,

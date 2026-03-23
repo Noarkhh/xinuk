@@ -1,10 +1,11 @@
 package pl.edu.agh.xinuk.gui
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
-import pl.edu.agh.xinuk.config.XinukConfig
+import pl.edu.agh.xinuk.config.{XinukConfig, CellGuiPayloadColor}
 import pl.edu.agh.xinuk.model._
 import pl.edu.agh.xinuk.model.grid.GridCellId
 import pl.edu.agh.xinuk.simulation.WorkerActor.{GridInfo, MsgWrapper, SubscribeGridInfo}
+import pl.edu.agh.xinuk.simulation.GridInfoCellColor
 
 import java.awt.Color
 import java.awt.image.BufferedImage
@@ -32,7 +33,11 @@ class SnapshotActor private (worker: ActorRef, simulationId: String, workerIds: 
     log.info("GUI stopped")
   }
 
-  def started: Receive = { case GridInfo(iteration, cellColors, _) =>
+  def started: Receive = { case GridInfo(iteration, cellPayloads, _) =>
+    val cellColors = cellPayloads.map({
+      case (cellId, GridInfoCellColor(color)) => (cellId, color)
+      case (cellId, _)                        => (cellId, Color.WHITE)
+    })
     cellColorsStash(iteration) :+= cellColors.toSeq
     if (cellColorsStash(iteration).size == workerIds.size) {
       snapshotSaver.snapshot(iteration, cellColorsStash(iteration).flatten.toMap)
