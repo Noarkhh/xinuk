@@ -71,6 +71,7 @@ def modelProject(projectName: String)(mainClassName: String): Project = {
         "com.typesafe.akka" %% "akka-testkit" % Version.Akka % Test,
         "org.mockito" % "mockito-core" % Version.Mockito % Test
       ),
+      run / fork := true,
       mainClass in assembly := Some(mainClassName),
       assemblyJarName in assembly := s"$projectName.jar",
       test in assembly := {},
