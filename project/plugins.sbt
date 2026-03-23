@@ -1,5 +1,6 @@
 logLevel := Level.Warn
 
+addSbtPlugin("ch.epfl.scala" % "sbt-bloop" % "2.0.16")
 addSbtPlugin("io.get-coursier" % "sbt-coursier" % "1.0.1")
 addSbtPlugin("com.timushev.sbt" % "sbt-updates" % "0.3.4")
 addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.14.6")
