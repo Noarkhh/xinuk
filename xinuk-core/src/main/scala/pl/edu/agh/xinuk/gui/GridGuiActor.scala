@@ -12,8 +12,8 @@ import pl.edu.agh.xinuk.algorithm.Metrics
 import pl.edu.agh.xinuk.config.XinukConfig
 import pl.edu.agh.xinuk.model._
 import pl.edu.agh.xinuk.model.grid.{GridCellId, GridWorldShard}
-import pl.edu.agh.xinuk.simulation.WorkerActor.{GridInfo, MsgWrapper, SubscribeGridInfo}
-import pl.edu.agh.xinuk.simulation.GridInfoCellColor
+import pl.edu.agh.xinuk.simulation.WorkerActor.{GuiInfo, MsgWrapper, SubscribeGuiInfo}
+import pl.edu.agh.xinuk.simulation.GuiCellColor
 
 import scala.collection.mutable
 import scala.swing.BorderPanel.Position._
@@ -35,7 +35,7 @@ class GridGuiActor private (
   private lazy val gui: GuiGrid = new GuiGrid(bounds, workerId)
 
   override def preStart(): Unit = {
-    worker ! MsgWrapper(workerId, SubscribeGridInfo())
+    worker ! MsgWrapper(workerId, SubscribeGuiInfo())
     log.info("GUI started")
   }
 
@@ -44,9 +44,9 @@ class GridGuiActor private (
     gui.quit()
   }
 
-  def started: Receive = { case GridInfo(iteration, cellPayloads, metrics) =>
+  def started: Receive = { case GuiInfo(iteration, cellPayloads, metrics) =>
     val cellColors = cellPayloads.map({ case (cellId, cellPayload) =>
-      (cellId, cellPayload.asInstanceOf[GridInfoCellColor].color)
+      (cellId, cellPayload.asInstanceOf[GuiCellColor].color)
     })
     gui.setNewValues(cellColors)
     gui.updatePlot(iteration, metrics)

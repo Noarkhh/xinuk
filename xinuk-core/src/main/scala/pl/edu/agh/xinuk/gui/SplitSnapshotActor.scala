@@ -9,8 +9,8 @@ import javax.imageio.ImageIO
 import pl.edu.agh.xinuk.config.{XinukConfig, CellGuiPayloadColor}
 import pl.edu.agh.xinuk.model._
 import pl.edu.agh.xinuk.model.grid.{GridCellId, GridWorldShard}
-import pl.edu.agh.xinuk.simulation.WorkerActor.{GridInfo, MsgWrapper, SubscribeGridInfo}
-import pl.edu.agh.xinuk.simulation.GridInfoCellColor
+import pl.edu.agh.xinuk.simulation.WorkerActor.{GuiInfo, MsgWrapper, SubscribeGuiInfo}
+import pl.edu.agh.xinuk.simulation.GuiCellColor
 
 class SplitSnapshotActor private (
     worker: ActorRef,
@@ -27,7 +27,7 @@ class SplitSnapshotActor private (
     new SplitSnapshotSaver(bounds, simulationId, workerId)
 
   override def preStart(): Unit = {
-    worker ! MsgWrapper(workerId, SubscribeGridInfo())
+    worker ! MsgWrapper(workerId, SubscribeGuiInfo())
     log.info("GUI started")
   }
 
@@ -35,10 +35,10 @@ class SplitSnapshotActor private (
     log.info("GUI stopped")
   }
 
-  def started: Receive = { case GridInfo(iteration, cellPayloads, _) =>
+  def started: Receive = { case GuiInfo(iteration, cellPayloads, _) =>
     val cellColors = cellPayloads.map({
-      case (cellId, GridInfoCellColor(color)) => (cellId, color)
-      case (cellId, _)                        => (cellId, Color.WHITE)
+      case (cellId, GuiCellColor(color)) => (cellId, color)
+      case (cellId, _)                   => (cellId, Color.WHITE)
     })
     snapshotSaver.snapshot(iteration, cellColors)
   }

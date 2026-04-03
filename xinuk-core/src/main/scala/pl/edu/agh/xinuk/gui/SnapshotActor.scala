@@ -4,8 +4,8 @@ import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import pl.edu.agh.xinuk.config.{XinukConfig, CellGuiPayloadColor}
 import pl.edu.agh.xinuk.model._
 import pl.edu.agh.xinuk.model.grid.GridCellId
-import pl.edu.agh.xinuk.simulation.WorkerActor.{GridInfo, MsgWrapper, SubscribeGridInfo}
-import pl.edu.agh.xinuk.simulation.GridInfoCellColor
+import pl.edu.agh.xinuk.simulation.WorkerActor.{GuiInfo, MsgWrapper, SubscribeGuiInfo}
+import pl.edu.agh.xinuk.simulation.GuiCellColor
 
 import java.awt.Color
 import java.awt.image.BufferedImage
@@ -25,7 +25,7 @@ class SnapshotActor private (worker: ActorRef, simulationId: String, workerIds: 
     mutable.Map.empty.withDefaultValue(Seq.empty)
 
   override def preStart(): Unit = {
-    workerIds.foreach(worker ! MsgWrapper(_, SubscribeGridInfo()))
+    workerIds.foreach(worker ! MsgWrapper(_, SubscribeGuiInfo()))
     log.info("GUI started")
   }
 
@@ -33,10 +33,10 @@ class SnapshotActor private (worker: ActorRef, simulationId: String, workerIds: 
     log.info("GUI stopped")
   }
 
-  def started: Receive = { case GridInfo(iteration, cellPayloads, _) =>
+  def started: Receive = { case GuiInfo(iteration, cellPayloads, _) =>
     val cellColors = cellPayloads.map({
-      case (cellId, GridInfoCellColor(color)) => (cellId, color)
-      case (cellId, _)                        => (cellId, Color.WHITE)
+      case (cellId, GuiCellColor(color)) => (cellId, color)
+      case (cellId, _)                   => (cellId, Color.WHITE)
     })
     cellColorsStash(iteration) :+= cellColors.toSeq
     if (cellColorsStash(iteration).size == workerIds.size) {

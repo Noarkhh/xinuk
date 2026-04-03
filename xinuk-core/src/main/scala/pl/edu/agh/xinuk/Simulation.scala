@@ -11,8 +11,8 @@ import net.ceedubs.ficus.readers.ValueReader
 import pl.edu.agh.xinuk.algorithm.{Metrics, PlanCreator, PlanResolver, WorldCreator}
 import pl.edu.agh.xinuk.config.{GuiType, XinukConfig, CellGuiPayload}
 import pl.edu.agh.xinuk.gui.{GridGuiActor, SnapshotActor, SplitSnapshotActor, ParticlesGuiActor}
-import pl.edu.agh.xinuk.simulation.WorkerActor.GridInfo
-import pl.edu.agh.xinuk.simulation.{GridInfoCellPayload}
+import pl.edu.agh.xinuk.simulation.WorkerActor.GuiInfo
+import pl.edu.agh.xinuk.simulation.{GuiInfoCellPayload}
 import pl.edu.agh.xinuk.model._
 import pl.edu.agh.xinuk.model.grid.{GridWorldShard, GridWorldType}
 import pl.edu.agh.xinuk.simulation.WorkerActor
@@ -27,7 +27,7 @@ class Simulation[ConfigType <: XinukConfig: ValueReader](
     planResolverFactory: () => PlanResolver[ConfigType],
     emptyMetrics: => Metrics,
     signalPropagation: SignalPropagation,
-    cellStatePayloader: CellState => GridInfoCellPayload
+    cellStatePayloader: CellState => GuiInfoCellPayload
 ) extends LazyLogging {
 
   private val rawConfig: Config =

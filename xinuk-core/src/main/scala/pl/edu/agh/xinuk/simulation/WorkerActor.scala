@@ -12,11 +12,13 @@ import java.security.SecureRandom
 import scala.collection.mutable
 import scala.util.Random
 
-trait GridInfoCellPayload
+sealed trait GuiInfoCellPayload
 
-final case class GridInfoCellColor(color: Color) extends GridInfoCellPayload
-case class Particle(x: Double, y: Double)
-final case class GridInfoCellParticles(particles: Set[(Double, Double)]) extends GridInfoCellPayload
+final case class GuiCellColor(color: Color) extends GuiInfoCellPayload
+final case class GuiCellParticles(particles: Iterable[GuiParticle], particlesColor: Color)
+    extends GuiInfoCellPayload
+
+case class GuiParticle(x: Double, y: Double)
 
 class WorkerActor[ConfigType <: XinukConfig](
     regionRef: => ActorRef,
@@ -24,7 +26,7 @@ class WorkerActor[ConfigType <: XinukConfig](
     planResolver: PlanResolver[ConfigType],
     emptyMetrics: => Metrics,
     signalPropagation: SignalPropagation,
-    cellStatePayloader: CellState => GridInfoCellPayload
+    cellStatePayloader: CellState => GuiInfoCellPayload
 )(implicit config: ConfigType)
     extends Actor
     with Stash {
@@ -58,7 +60,7 @@ class WorkerActor[ConfigType <: XinukConfig](
 
   def stopped: Receive = {
 
-    case SubscribeGridInfo() =>
+    case SubscribeGuiInfo() =>
       guiActors += sender()
 
     case WorkerInitialized(world) =>
@@ -78,7 +80,7 @@ class WorkerActor[ConfigType <: XinukConfig](
 
   def started: Receive = {
 
-    case SubscribeGridInfo() =>
+    case SubscribeGuiInfo() =>
       guiActors += sender()
 
     case StartIteration(iteration) if iteration > config.iterationsNumber =>
@@ -161,12 +163,14 @@ class WorkerActor[ConfigType <: XinukConfig](
           ) {
             val cellPayloads = payloadCellStates(worldShard.localCellIds.map(worldShard.cells(_)))
             guiActors.foreach(
-              _ ! GridInfo(iteration, cellPayloads, iterationMetrics)
+              _ ! GuiInfo(iteration, cellPayloads, iterationMetrics)
             )
           }
           if (iteration % config.iterationFinishedLogFrequency == 0) {
             logger.info(s"finished $iteration")
           }
+          import scala.concurrent.duration._
+          // Thread.sleep(500.millis.toMillis)
           self ! StartIteration(currentIteration + 1)
           iterationFinished = true
         }
@@ -318,7 +322,7 @@ class WorkerActor[ConfigType <: XinukConfig](
           Color.getHSBColor(hue, saturation, luminance)
       }
 
-  private def payloadCellStates(cells: Set[Cell]): Map[CellId, GridInfoCellPayload] = cells.map {
+  private def payloadCellStates(cells: Set[Cell]): Map[CellId, GuiInfoCellPayload] = cells.map {
     cell =>
       cell.id -> cellStatePayloader(cell.state)
       // cell => cell.id -> CellGuiPayloadColor(cellToColor.applyOrElse(cell.state, defaultColor))
@@ -358,7 +362,7 @@ object WorkerActor {
       planResolver: PlanResolver[ConfigType],
       emptyMetrics: => Metrics,
       signalPropagation: SignalPropagation,
-      cellStatePayloader: CellState => GridInfoCellPayload
+      cellStatePayloader: CellState => GuiInfoCellPayload
   )(implicit config: ConfigType): Props = {
     Props(
       new WorkerActor(
@@ -383,15 +387,15 @@ object WorkerActor {
     (id.value.toString, msg)
   }
 
-  final case class GridInfo(
+  final case class GuiInfo(
       iteration: Long,
-      cellColors: Map[CellId, GridInfoCellPayload],
+      cellColors: Map[CellId, GuiInfoCellPayload],
       metrics: Metrics
   )
 
   final case class MsgWrapper(id: WorkerId, value: Any)
 
-  final case class SubscribeGridInfo()
+  final case class SubscribeGuiInfo()
 
   final case class WorkerInitialized(world: WorldShard)
 

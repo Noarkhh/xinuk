@@ -8,7 +8,7 @@ import pl.edu.agh.mock.model.Mock
 import pl.edu.agh.xinuk.Simulation
 import pl.edu.agh.xinuk.model.grid.GridSignalPropagation
 import pl.edu.agh.xinuk.model.{CellState, Obstacle}
-import pl.edu.agh.xinuk.simulation.GridInfoCellColor
+import pl.edu.agh.xinuk.simulation.GuiCellColor
 
 object MockMain extends LazyLogging {
   private val configPrefix = "mock"
@@ -27,8 +27,8 @@ object MockMain extends LazyLogging {
     ).start()
   }
 
-  private def cellToColor(cellState: CellState): GridInfoCellColor = {
-    GridInfoCellColor(cellState.contents match {
+  private def cellToColor(cellState: CellState): GuiCellColor = {
+    GuiCellColor(cellState.contents match {
       case Mock     => Color.WHITE
       case Obstacle => Color.BLUE
       case _        => cellToColorRegions(cellState)

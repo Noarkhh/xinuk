@@ -12,14 +12,15 @@ import pl.edu.agh.xinuk.algorithm.Metrics
 import pl.edu.agh.xinuk.config.{XinukConfig, CellGuiPayloadColor}
 import pl.edu.agh.xinuk.model._
 import pl.edu.agh.xinuk.model.grid.{GridCellId, GridWorldShard}
-import pl.edu.agh.xinuk.simulation.WorkerActor.{GridInfo, MsgWrapper, SubscribeGridInfo}
-import pl.edu.agh.xinuk.simulation.GridInfoCellParticles
+import pl.edu.agh.xinuk.simulation.WorkerActor.{GuiInfo, MsgWrapper, SubscribeGuiInfo}
+import pl.edu.agh.xinuk.simulation.GuiCellParticles
 
 import scala.collection.mutable
 import scala.swing.BorderPanel.Position._
 import scala.swing.TabbedPane.Page
 import scala.swing._
 import scala.util.{Random, Try}
+import pl.edu.agh.xinuk.simulation.GuiParticle
 
 class ParticlesGuiActor private (
     worker: ActorRef,
@@ -35,7 +36,7 @@ class ParticlesGuiActor private (
   private lazy val gui: GuiParticles = new GuiParticles(bounds, workerId)
 
   override def preStart(): Unit = {
-    worker ! MsgWrapper(workerId, SubscribeGridInfo())
+    worker ! MsgWrapper(workerId, SubscribeGuiInfo())
     log.info("GUI started")
   }
 
@@ -44,14 +45,14 @@ class ParticlesGuiActor private (
     gui.quit()
   }
 
-  def started: Receive = { case GridInfo(iteration, cellPayloads, metrics) =>
-    val cellParticles = cellPayloads.map({
+  def started: Receive = { case GuiInfo(iteration, cellPayloads, metrics) =>
+    val cellParticlesMap = cellPayloads.map({
       case (cellId, cellPayload) => {
-        val particles = cellPayload.asInstanceOf[GridInfoCellParticles].particles
-        (cellId, particles)
+        val cellParticles = cellPayload.asInstanceOf[GuiCellParticles]
+        (cellId, cellParticles)
       }
     })
-    gui.setNewValues(cellParticles)
+    gui.setNewValues(cellParticlesMap)
     gui.updatePlot(iteration, metrics)
   }
 }
@@ -131,8 +132,8 @@ private[gui] class GuiParticles(bounds: GridWorldShard.Bounds, workerId: WorkerI
     (location, size)
   }
 
-  def setNewValues(cellParticles: Map[CellId, Set[(Double, Double)]]): Unit = {
-    cellView.set(cellParticles)
+  def setNewValues(cellParticlesMap: Map[CellId, GuiCellParticles]): Unit = {
+    cellView.set(cellParticlesMap)
   }
 
   private class ParticleCanvas(xOffset: Int, yOffset: Int, xSize: Int, ySize: Int, guiCellSize: Int)
@@ -142,20 +143,29 @@ private[gui] class GuiParticles(bounds: GridWorldShard.Bounds, workerId: WorkerI
 
     icon = new ImageIcon(img)
 
-    def set(cellParticles: Map[CellId, Set[(Double, Double)]]): Unit = {
+    def set(cellParticlesMap: Map[CellId, GuiCellParticles]): Unit = {
       val g = img.createGraphics()
       g.setColor(Color.WHITE)
       g.fillRect(0, 0, img.getWidth, img.getHeight)
+      g.setColor(new Color(180, 180, 180))
+      for (col <- 1 until xSize) {
+        g.drawLine(col * guiCellSize, 0, col * guiCellSize, img.getHeight)
+      }
+      for (row <- 1 until ySize) {
+        g.drawLine(0, row * guiCellSize, img.getWidth, row * guiCellSize)
+      }
       g.dispose()
 
-      cellParticles.foreach {
-        case (GridCellId(x, y), particles) =>
-          val startX = (x - xOffset) * guiCellSize
-          val startY = (y - yOffset) * guiCellSize
-          val particleSize = 2
-          particles.foreach { case (px, py) =>
-            val pixelX = startX + (px * guiCellSize).toInt - particleSize / 2
-            val pixelY = startY + (py * guiCellSize).toInt - particleSize / 2
+      val particleSize = 1
+
+      cellParticlesMap.foreach {
+        case (GridCellId(gridX, gridY), GuiCellParticles(particles, particlesColor)) =>
+          val particleArray = Array.fill(particleSize * particleSize)(particlesColor.getRGB)
+          val startX = (gridX - xOffset) * guiCellSize
+          val startY = (gridY - yOffset) * guiCellSize
+          particles.foreach { case GuiParticle(particleX, particleY) =>
+            val pixelX = startX + (particleX * guiCellSize).toInt - particleSize / 2
+            val pixelY = startY + (particleY * guiCellSize).toInt - particleSize / 2
             val clampedX = pixelX.max(0).min(img.getWidth - particleSize)
             val clampedY = pixelY.max(0).min(img.getHeight - particleSize)
             img.setRGB(
@@ -163,7 +173,7 @@ private[gui] class GuiParticles(bounds: GridWorldShard.Bounds, workerId: WorkerI
               clampedY,
               particleSize,
               particleSize,
-              Array.fill(particleSize * particleSize)(Color.BLACK.getRGB),
+              particleArray,
               0,
               particleSize
             )
