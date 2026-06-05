@@ -1,7 +1,7 @@
 package pl.edu.agh.xinuk.gui
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
-import pl.edu.agh.xinuk.config.{XinukConfig, CellGuiPayloadColor}
+import pl.edu.agh.xinuk.config.XinukConfig
 import pl.edu.agh.xinuk.model._
 import pl.edu.agh.xinuk.model.grid.GridCellId
 import pl.edu.agh.xinuk.simulation.WorkerActor.{GuiInfo, MsgWrapper, SubscribeGuiInfo}
@@ -13,14 +13,14 @@ import java.io.File
 import javax.imageio.ImageIO
 import scala.collection.mutable
 
-class SnapshotActor private (worker: ActorRef, simulationId: String, workerIds: Set[WorkerId])(
+class GridSnapshotActor private (worker: ActorRef, simulationId: String, workerIds: Set[WorkerId])(
     implicit config: XinukConfig
 ) extends Actor
     with ActorLogging {
 
   override def receive: Receive = started
 
-  private lazy val snapshotSaver: SnapshotSaver = new SnapshotSaver(simulationId)
+  private lazy val snapshotSaver: GridSnapshotSaver = new GridSnapshotSaver(simulationId)
   val cellColorsStash: mutable.Map[Long, Seq[Seq[(CellId, Color)]]] =
     mutable.Map.empty.withDefaultValue(Seq.empty)
 
@@ -46,15 +46,15 @@ class SnapshotActor private (worker: ActorRef, simulationId: String, workerIds: 
   }
 }
 
-object SnapshotActor {
+object GridSnapshotActor {
   def props(worker: ActorRef, simulationId: String, workerIds: Set[WorkerId])(implicit
       config: XinukConfig
   ): Props = {
-    Props(new SnapshotActor(worker, simulationId, workerIds))
+    Props(new GridSnapshotActor(worker, simulationId, workerIds))
   }
 }
 
-private class SnapshotSaver(simulationId: String)(implicit config: XinukConfig) {
+private class GridSnapshotSaver(simulationId: String)(implicit config: XinukConfig) {
   private val snapshotDirectory = new File(s"out/snapshots/$simulationId")
   snapshotDirectory.mkdirs()
   private val img = new BufferedImage(

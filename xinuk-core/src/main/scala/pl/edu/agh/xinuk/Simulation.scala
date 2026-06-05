@@ -9,8 +9,15 @@ import com.typesafe.config.{Config, ConfigFactory, ConfigRenderOptions}
 import com.typesafe.scalalogging.LazyLogging
 import net.ceedubs.ficus.readers.ValueReader
 import pl.edu.agh.xinuk.algorithm.{Metrics, PlanCreator, PlanResolver, WorldCreator}
-import pl.edu.agh.xinuk.config.{GuiType, XinukConfig, CellGuiPayload}
-import pl.edu.agh.xinuk.gui.{GridGuiActor, SnapshotActor, SplitSnapshotActor, ParticlesGuiActor}
+import pl.edu.agh.xinuk.config.{GuiType, XinukConfig}
+import pl.edu.agh.xinuk.gui.{
+  SplitGridGuiActor,
+  GridSnapshotActor,
+  SplitSnapshotActor,
+  SplitParticlesGuiActor,
+  ParticlesSnapshotActor,
+  ParticlesGuiActor
+}
 import pl.edu.agh.xinuk.simulation.WorkerActor.GuiInfo
 import pl.edu.agh.xinuk.simulation.{GuiInfoCellPayload}
 import pl.edu.agh.xinuk.model._
@@ -86,11 +93,11 @@ class Simulation[ConfigType <: XinukConfig: ValueReader](
       })
 
       (config.guiType, config.worldType) match {
-        case (GuiType.None, _)             =>
-        case (GuiType.Grid, GridWorldType) =>
+        case (GuiType.None, _)                  =>
+        case (GuiType.SplitGrid, GridWorldType) =>
           workerToWorld.foreach({ case (workerId, world) =>
             system.actorOf(
-              GridGuiActor.props(
+              SplitGridGuiActor.props(
                 workerRegionRef,
                 simulationId,
                 workerId,
@@ -110,11 +117,19 @@ class Simulation[ConfigType <: XinukConfig: ValueReader](
             )
           })
         case (GuiType.Snapshot, GridWorldType) =>
-          system.actorOf(SnapshotActor.props(workerRegionRef, simulationId, workerToWorld.keySet))
-        case (GuiType.Particles, GridWorldType) =>
+          system.actorOf(
+            GridSnapshotActor.props(workerRegionRef, simulationId, workerToWorld.keySet)
+          )
+
+        case (GuiType.ParticlesSnapshot, GridWorldType) =>
+          system.actorOf(
+            ParticlesSnapshotActor.props(workerRegionRef, simulationId, workerToWorld.keySet)
+          )
+
+        case (GuiType.SplitParticles, GridWorldType) =>
           workerToWorld.foreach({ case (workerId, world) =>
             system.actorOf(
-              ParticlesGuiActor.props(
+              SplitParticlesGuiActor.props(
                 workerRegionRef,
                 simulationId,
                 workerId,
@@ -122,6 +137,11 @@ class Simulation[ConfigType <: XinukConfig: ValueReader](
               )
             )
           })
+
+        case (GuiType.Particles, GridWorldType) =>
+          system.actorOf(
+            ParticlesGuiActor.props(workerRegionRef, simulationId, workerToWorld.keySet)
+          )
 
         case _ => logger.warn("GUI type not recognized or incompatible with World format.")
       }

@@ -21,7 +21,7 @@ import scala.swing.TabbedPane.Page
 import scala.swing._
 import scala.util.{Random, Try}
 
-class GridGuiActor private (
+class SplitGridGuiActor private (
     worker: ActorRef,
     simulationId: String,
     workerId: WorkerId,
@@ -32,7 +32,7 @@ class GridGuiActor private (
 
   override def receive: Receive = started
 
-  private lazy val gui: GuiGrid = new GuiGrid(bounds, workerId)
+  private lazy val gui: SplitGuiGrid = new SplitGuiGrid(bounds, workerId)
 
   override def preStart(): Unit = {
     worker ! MsgWrapper(workerId, SubscribeGuiInfo())
@@ -53,18 +53,18 @@ class GridGuiActor private (
   }
 }
 
-object GridGuiActor {
+object SplitGridGuiActor {
   def props(
       worker: ActorRef,
       simulationId: String,
       workerId: WorkerId,
       bounds: GridWorldShard.Bounds
   )(implicit config: XinukConfig): Props = {
-    Props(new GridGuiActor(worker, simulationId, workerId, bounds))
+    Props(new SplitGridGuiActor(worker, simulationId, workerId, bounds))
   }
 }
 
-private[gui] class GuiGrid(bounds: GridWorldShard.Bounds, workerId: WorkerId)(implicit
+private[gui] class SplitGuiGrid(bounds: GridWorldShard.Bounds, workerId: WorkerId)(implicit
     config: XinukConfig
 ) extends SimpleSwingApplication {
 
@@ -177,7 +177,7 @@ private[gui] class GuiGrid(bounds: GridWorldShard.Bounds, workerId: WorkerId)(im
   def updatePlot(iteration: Long, metrics: Metrics): Unit = {
     def createSeries(name: String): XYSeries = {
       val series = new XYSeries(name)
-      series.setMaximumItemCount(GuiGrid.MaximumPlotSize)
+      series.setMaximumItemCount(SplitGuiGrid.MaximumPlotSize)
       dataset.addSeries(series)
       series
     }
@@ -191,6 +191,6 @@ private[gui] class GuiGrid(bounds: GridWorldShard.Bounds, workerId: WorkerId)(im
 
 }
 
-object GuiGrid {
+object SplitGuiGrid {
   final val MaximumPlotSize = 400
 }

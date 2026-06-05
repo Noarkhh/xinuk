@@ -23,13 +23,10 @@ trait XinukConfig {
 
   def guiType: GuiType
   def guiCellSize: Int
+  def guiParticleSize: Int
   def guiStartIteration: Long
   def guiUpdateFrequency: Long
 }
-
-trait CellGuiPayload
-
-final case class CellGuiPayloadColor(color: Color) extends CellGuiPayload
 
 sealed trait GuiType extends NamedEnum
 
@@ -41,7 +38,7 @@ object GuiType extends AbstractNamedEnumCompanion[GuiType] {
     override val name: String = "none"
   }
 
-  case object Grid extends GuiType {
+  case object SplitGrid extends GuiType {
     override def name: String = "grid"
   }
 
@@ -49,8 +46,16 @@ object GuiType extends AbstractNamedEnumCompanion[GuiType] {
     override def name: String = "snapshot"
   }
 
+  case object ParticlesSnapshot extends GuiType {
+    override def name: String = "particlesSnapshot"
+  }
+
   case object SplitSnapshot extends GuiType {
     override def name: String = "splitSnapshot"
+  }
+
+  case object SplitParticles extends GuiType {
+    override def name: String = "splitParticles"
   }
 
   case object Particles extends GuiType {

@@ -6,7 +6,7 @@ import java.io.File
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import javax.imageio.ImageIO
-import pl.edu.agh.xinuk.config.{XinukConfig, CellGuiPayloadColor}
+import pl.edu.agh.xinuk.config.XinukConfig
 import pl.edu.agh.xinuk.model._
 import pl.edu.agh.xinuk.model.grid.{GridCellId, GridWorldShard}
 import pl.edu.agh.xinuk.simulation.WorkerActor.{GuiInfo, MsgWrapper, SubscribeGuiInfo}

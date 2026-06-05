@@ -11,88 +11,92 @@ import org.jfree.data.xy.{XYSeries, XYSeriesCollection}
 import pl.edu.agh.xinuk.algorithm.Metrics
 import pl.edu.agh.xinuk.config.XinukConfig
 import pl.edu.agh.xinuk.model._
-import pl.edu.agh.xinuk.model.grid.GridCellId
+import pl.edu.agh.xinuk.model.grid.{GridCellId, GridWorldShard}
 import pl.edu.agh.xinuk.simulation.WorkerActor.{GuiInfo, MsgWrapper, SubscribeGuiInfo}
-import pl.edu.agh.xinuk.simulation.{GuiCellParticles, GuiParticle}
+import pl.edu.agh.xinuk.simulation.GuiCellParticles
 
 import scala.collection.mutable
 import scala.swing.BorderPanel.Position._
 import scala.swing.TabbedPane.Page
 import scala.swing._
-import scala.util.Try
+import scala.util.{Random, Try}
+import pl.edu.agh.xinuk.simulation.GuiParticle
 
-class ParticlesGuiActor private (
+class SplitParticlesGuiActor private (
     worker: ActorRef,
     simulationId: String,
-    workerIds: Set[WorkerId]
+    workerId: WorkerId,
+    bounds: GridWorldShard.Bounds
 )(implicit config: XinukConfig)
     extends Actor
     with ActorLogging {
 
-  private lazy val gui: GuiParticles = new GuiParticles()
-
-  private val cellParticlesStash: mutable.Map[Long, Seq[Seq[(CellId, GuiCellParticles)]]] =
-    mutable.Map.empty.withDefaultValue(Seq.empty)
-  private val metricsStash: mutable.Map[Long, Seq[Metrics]] =
-    mutable.Map.empty.withDefaultValue(Seq.empty)
-
   override def receive: Receive = started
 
+  private lazy val gui: SplitGuiParticles = new SplitGuiParticles(bounds, workerId)
+
   override def preStart(): Unit = {
-    workerIds.foreach(worker ! MsgWrapper(_, SubscribeGuiInfo()))
-    log.info("Joint GUI started")
+    worker ! MsgWrapper(workerId, SubscribeGuiInfo())
+    log.info("GUI started")
   }
 
   override def postStop(): Unit = {
-    log.info("Joint GUI stopped")
+    log.info("GUI stopped")
     gui.quit()
   }
 
   def started: Receive = { case GuiInfo(iteration, cellPayloads, metrics) =>
-    val cellParticles = cellPayloads.map { case (cellId, cellPayload) =>
-      (cellId, cellPayload.asInstanceOf[GuiCellParticles])
-    }
-
-    cellParticlesStash(iteration) :+= cellParticles.toSeq
-    metricsStash(iteration) :+= metrics
-    // metricsStash(iteration) = metricsStash.get(iteration).fold(metrics)(_ + metrics)
-
-    if (cellParticlesStash(iteration).size == workerIds.size) {
-      gui.setNewValues(cellParticlesStash(iteration).flatten.toMap)
-      gui.updatePlot(iteration, metricsStash(iteration).reduce(_ + _))
-      cellParticlesStash.remove(iteration)
-      metricsStash.remove(iteration)
-    }
+    val cellParticlesMap = cellPayloads.map({
+      case (cellId, cellPayload) => {
+        val cellParticles = cellPayload.asInstanceOf[GuiCellParticles]
+        (cellId, cellParticles)
+      }
+    })
+    gui.setNewValues(cellParticlesMap)
+    gui.updatePlot(iteration, metrics)
   }
 }
 
-object ParticlesGuiActor {
-  def props(worker: ActorRef, simulationId: String, workerIds: Set[WorkerId])(implicit
-      config: XinukConfig
-  ): Props =
-    Props(new ParticlesGuiActor(worker, simulationId, workerIds))
+object SplitParticlesGuiActor {
+  def props(
+      worker: ActorRef,
+      simulationId: String,
+      workerId: WorkerId,
+      bounds: GridWorldShard.Bounds
+  )(implicit config: XinukConfig): Props = {
+    Props(new SplitParticlesGuiActor(worker, simulationId, workerId, bounds))
+  }
 }
 
-private[gui] class GuiParticles()(implicit config: XinukConfig) extends SimpleSwingApplication {
+private[gui] class SplitGuiParticles(bounds: GridWorldShard.Bounds, workerId: WorkerId)(implicit
+    config: XinukConfig
+) extends SimpleSwingApplication {
 
   Try(UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName))
 
   private val bgColor = new Color(220, 220, 220)
   private val cellView =
-    new ParticleCanvas(config.worldWidth, config.worldHeight, config.guiCellSize)
+    new SplitParticleCanvas(
+      bounds.xMin,
+      bounds.yMin,
+      bounds.xSize,
+      bounds.ySize,
+      config.guiCellSize
+    )
   private val chartPanel = new BorderPanel {
     background = bgColor
   }
+  private val chartPage = new Page("Plot", chartPanel)
+  private val (alignedLocation, alignedSize) = alignFrame()
 
   def top: MainFrame = new MainFrame {
-    title = "Xinuk Joint View"
+    title = s"Xinuk ${workerId.value}"
     background = bgColor
-    preferredSize = new Dimension(
-      config.worldWidth * config.guiCellSize + 24,
-      config.worldHeight * config.guiCellSize + 70
-    )
+    location = alignedLocation
+    preferredSize = alignedSize
 
     val mainPanel: BorderPanel = new BorderPanel {
+
       val cellPanel: BorderPanel = new BorderPanel {
         val view: BorderPanel = new BorderPanel {
           background = bgColor
@@ -104,7 +108,7 @@ private[gui] class GuiParticles()(implicit config: XinukConfig) extends SimpleSw
 
       val contentPane: TabbedPane = new TabbedPane {
         pages += new Page("Cells", cellPanel)
-        pages += new Page("Plot", chartPanel)
+        pages += chartPage
       }
 
       layout(contentPane) = Center
@@ -113,10 +117,38 @@ private[gui] class GuiParticles()(implicit config: XinukConfig) extends SimpleSw
     contents = mainPanel
   }
 
-  def setNewValues(cellParticlesMap: Map[CellId, GuiCellParticles]): Unit =
-    cellView.set(cellParticlesMap)
+  private def alignFrame(): (Point, Dimension) = {
+    val xPos = (workerId.value - 1) / config.workersY
+    val yPos = (workerId.value - 1) % config.workersY
 
-  private class ParticleCanvas(xSize: Int, ySize: Int, guiCellSize: Int) extends Label {
+    val xGlobalOffset = 100
+    val yGlobalOffset = 0
+
+    val xWindowAdjustment = 24
+    val yWindowAdjustment = 70
+
+    val xLocalOffset = bounds.xMin * config.guiCellSize + xPos * xWindowAdjustment
+    val yLocalOffset = bounds.yMin * config.guiCellSize + yPos * yWindowAdjustment
+
+    val width = bounds.xSize * config.guiCellSize + xWindowAdjustment
+    val height = bounds.ySize * config.guiCellSize + yWindowAdjustment
+
+    val location = new Point(xGlobalOffset + xLocalOffset, yGlobalOffset + yLocalOffset)
+    val size = new Dimension(width, height)
+    (location, size)
+  }
+
+  def setNewValues(cellParticlesMap: Map[CellId, GuiCellParticles]): Unit = {
+    cellView.set(cellParticlesMap)
+  }
+
+  private class SplitParticleCanvas(
+      xOffset: Int,
+      yOffset: Int,
+      xSize: Int,
+      ySize: Int,
+      guiCellSize: Int
+  ) extends Label {
     private val img =
       new BufferedImage(xSize * guiCellSize, ySize * guiCellSize, BufferedImage.TYPE_INT_ARGB)
 
@@ -136,11 +168,12 @@ private[gui] class GuiParticles()(implicit config: XinukConfig) extends SimpleSw
       g.dispose()
 
       val particleSize = 1
+
       cellParticlesMap.foreach {
         case (GridCellId(gridX, gridY), GuiCellParticles(particles, particlesColor)) =>
           val particleArray = Array.fill(particleSize * particleSize)(particlesColor.getRGB)
-          val startX = gridX * guiCellSize
-          val startY = gridY * guiCellSize
+          val startX = (gridX - xOffset) * guiCellSize
+          val startY = (gridY - yOffset) * guiCellSize
           particles.foreach { case GuiParticle(particleX, particleY) =>
             val pixelX = startX + (particleX * guiCellSize).toInt - particleSize / 2
             val pixelY = startY + (particleY * guiCellSize).toInt - particleSize / 2
@@ -174,23 +207,26 @@ private[gui] class GuiParticles()(implicit config: XinukConfig) extends SimpleSw
     true,
     false
   )
-  chartPanel.layout(swing.Component.wrap(new ChartPanel(chart))) = Center
+  private val panel = new ChartPanel(chart)
+  chartPanel.layout(swing.Component.wrap(panel)) = Center
 
   def updatePlot(iteration: Long, metrics: Metrics): Unit = {
     def createSeries(name: String): XYSeries = {
       val series = new XYSeries(name)
-      series.setMaximumItemCount(GuiParticles.MaximumPlotSize)
+      series.setMaximumItemCount(SplitGuiParticles.MaximumPlotSize)
       dataset.addSeries(series)
       series
     }
+
     metrics.series.foreach { case (name, value) =>
       nameToSeries.getOrElseUpdate(name, createSeries(name)).add(iteration.toDouble, value)
     }
   }
 
   main(Array.empty)
+
 }
 
-object GuiParticles {
+object SplitGuiParticles {
   final val MaximumPlotSize = 400
 }
