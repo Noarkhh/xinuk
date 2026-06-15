@@ -15,8 +15,7 @@ import scala.util.Random
 sealed trait GuiInfoCellPayload
 
 final case class GuiCellColor(color: Color) extends GuiInfoCellPayload
-final case class GuiCellParticles(particles: Iterable[GuiParticle], particlesColor: Color)
-    extends GuiInfoCellPayload
+final case class GuiCellParticles(particles: Iterable[GuiParticle]) extends GuiInfoCellPayload
 
 case class GuiParticle(x: Double, y: Double)
 

@@ -21,7 +21,7 @@ import scala.swing.TabbedPane.Page
 import scala.swing._
 import scala.util.Try
 
-class ParticlesGuiActor private (
+class MicroParticlesGuiActor private (
     worker: ActorRef,
     simulationId: String,
     workerIds: Set[WorkerId]
@@ -29,7 +29,7 @@ class ParticlesGuiActor private (
     extends Actor
     with ActorLogging {
 
-  private lazy val gui: GuiParticles = new GuiParticles()
+  private lazy val gui: GuiMicroParticles = new GuiMicroParticles()
 
   private val cellParticlesStash: mutable.Map[Long, Seq[Seq[(CellId, GuiCellParticles)]]] =
     mutable.Map.empty.withDefaultValue(Seq.empty)
@@ -66,14 +66,15 @@ class ParticlesGuiActor private (
   }
 }
 
-object ParticlesGuiActor {
+object MicroParticlesGuiActor {
   def props(worker: ActorRef, simulationId: String, workerIds: Set[WorkerId])(implicit
       config: XinukConfig
   ): Props =
-    Props(new ParticlesGuiActor(worker, simulationId, workerIds))
+    Props(new MicroParticlesGuiActor(worker, simulationId, workerIds))
 }
 
-private[gui] class GuiParticles()(implicit config: XinukConfig) extends SimpleSwingApplication {
+private[gui] class GuiMicroParticles()(implicit config: XinukConfig)
+    extends SimpleSwingApplication {
 
   Try(UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName))
 
@@ -130,15 +131,15 @@ private[gui] class GuiParticles()(implicit config: XinukConfig) extends SimpleSw
 
     def set(cellParticlesMap: Map[CellId, GuiCellParticles]): Unit = {
       val g = img.createGraphics()
-      g.setColor(Color.WHITE)
+      g.setColor(Color.BLACK)
       g.fillRect(0, 0, img.getWidth, img.getHeight)
-      g.setColor(new Color(180, 180, 180))
-      for (col <- 1 until xSize) {
-        g.drawLine(col * guiCellSize, 0, col * guiCellSize, img.getHeight)
-      }
-      for (row <- 1 until ySize) {
-        g.drawLine(0, row * guiCellSize, img.getWidth, row * guiCellSize)
-      }
+      // g.setColor(new Color(180, 180, 180))
+      // for (col <- 1 until xSize) {
+      //   g.drawLine(col * guiCellSize, 0, col * guiCellSize, img.getHeight)
+      // }
+      // for (row <- 1 until ySize) {
+      //   g.drawLine(0, row * guiCellSize, img.getWidth, row * guiCellSize)
+      // }
       g.dispose()
 
       cellParticlesMap.foreach {
@@ -146,21 +147,45 @@ private[gui] class GuiParticles()(implicit config: XinukConfig) extends SimpleSw
           val particleArray = Array.fill(particleSize * particleSize)(Color.BLACK.getRGB())
           val startX = gridX * guiCellSize
           val startY = gridY * guiCellSize
-          particles.foreach { case GuiParticle(particleX, particleY) =>
-            val pixelX = startX + (particleX * guiCellSize).toInt - particleSize / 2
-            val pixelY = startY + (particleY * guiCellSize).toInt - particleSize / 2
-            val clampedX = pixelX.max(0).min(img.getWidth - particleSize)
-            val clampedY = pixelY.max(0).min(img.getHeight - particleSize)
-            img.setRGB(
-              clampedX,
-              clampedY,
-              particleSize,
-              particleSize,
-              particleArray,
-              0,
-              particleSize
-            )
-          }
+          particles
+            .groupMapReduce(particle => {
+              (
+                startX + (particle.x * guiCellSize).toInt - particleSize / 2,
+                startY + (particle.y * guiCellSize).toInt - particleSize / 2
+              )
+            })(_ => 1)(_ + _)
+            .foreach({ case ((x, y), n) =>
+              val clampedX = x.max(0).min(img.getWidth - particleSize)
+              val clampedY = y.max(0).min(img.getHeight - particleSize)
+              val color = new Color(255, (255 - n * 20).max(0), 0).getRGB()
+
+              img.setRGB(clampedX, clampedY, color)
+            // img.setRGB(
+            //   clampedX,
+            //   clampedY,
+            //   particleSize,
+            //   particleSize,
+            //   particleArray,
+            //   0,
+            //   particleSize
+            // )
+
+            })
+        // particles.foreach { case GuiParticle(particleX, particleY) =>
+        //   val pixelX = startX + (particleX * guiCellSize).toInt - particleSize / 2
+        //   val pixelY = startY + (particleY * guiCellSize).toInt - particleSize / 2
+        //   val clampedX = pixelX.max(0).min(img.getWidth - particleSize)
+        //   val clampedY = pixelY.max(0).min(img.getHeight - particleSize)
+        //   img.setRGB(
+        //     clampedX,
+        //     clampedY,
+        //     particleSize,
+        //     particleSize,
+        //     particleArray,
+        //     0,
+        //     particleSize
+        //   )
+        // }
         case _ =>
       }
       this.repaint()
@@ -184,7 +209,7 @@ private[gui] class GuiParticles()(implicit config: XinukConfig) extends SimpleSw
   def updatePlot(iteration: Long, metrics: Metrics): Unit = {
     def createSeries(name: String): XYSeries = {
       val series = new XYSeries(name)
-      series.setMaximumItemCount(GuiParticles.MaximumPlotSize)
+      series.setMaximumItemCount(GuiMicroParticles.MaximumPlotSize)
       dataset.addSeries(series)
       series
     }
@@ -196,6 +221,6 @@ private[gui] class GuiParticles()(implicit config: XinukConfig) extends SimpleSw
   main(Array.empty)
 }
 
-object GuiParticles {
+object GuiMicroParticles {
   final val MaximumPlotSize = 400
 }

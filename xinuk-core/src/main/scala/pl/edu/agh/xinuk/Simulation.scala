@@ -11,10 +11,10 @@ import net.ceedubs.ficus.readers.ValueReader
 import pl.edu.agh.xinuk.algorithm.{Metrics, PlanCreator, PlanResolver, WorldCreator}
 import pl.edu.agh.xinuk.config.{GuiType, XinukConfig}
 import pl.edu.agh.xinuk.gui.{
-  SplitGridGuiActor,
+  GridSplitGuiActor,
   GridSnapshotActor,
   SplitSnapshotActor,
-  SplitParticlesGuiActor,
+  ParticlesSplitGuiActor,
   ParticlesSnapshotActor,
   ParticlesGuiActor
 }
@@ -25,6 +25,7 @@ import pl.edu.agh.xinuk.model.grid.{GridWorldShard, GridWorldType}
 import pl.edu.agh.xinuk.simulation.WorkerActor
 
 import scala.util.{Failure, Success, Try}
+import pl.edu.agh.xinuk.gui.MicroParticlesGuiActor
 
 class Simulation[ConfigType <: XinukConfig: ValueReader](
     configPrefix: String,
@@ -97,7 +98,7 @@ class Simulation[ConfigType <: XinukConfig: ValueReader](
         case (GuiType.SplitGrid, GridWorldType) =>
           workerToWorld.foreach({ case (workerId, world) =>
             system.actorOf(
-              SplitGridGuiActor.props(
+              GridSplitGuiActor.props(
                 workerRegionRef,
                 simulationId,
                 workerId,
@@ -129,7 +130,7 @@ class Simulation[ConfigType <: XinukConfig: ValueReader](
         case (GuiType.SplitParticles, GridWorldType) =>
           workerToWorld.foreach({ case (workerId, world) =>
             system.actorOf(
-              SplitParticlesGuiActor.props(
+              ParticlesSplitGuiActor.props(
                 workerRegionRef,
                 simulationId,
                 workerId,
@@ -141,6 +142,11 @@ class Simulation[ConfigType <: XinukConfig: ValueReader](
         case (GuiType.Particles, GridWorldType) =>
           system.actorOf(
             ParticlesGuiActor.props(workerRegionRef, simulationId, workerToWorld.keySet)
+          )
+
+        case (GuiType.MicroParticles, GridWorldType) =>
+          system.actorOf(
+            MicroParticlesGuiActor.props(workerRegionRef, simulationId, workerToWorld.keySet)
           )
 
         case _ => logger.warn("GUI type not recognized or incompatible with World format.")

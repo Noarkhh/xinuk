@@ -61,4 +61,8 @@ object GuiType extends AbstractNamedEnumCompanion[GuiType] {
   case object Particles extends GuiType {
     override def name: String = "particles"
   }
+
+  case object MicroParticles extends GuiType {
+    override def name: String = "microParticles"
+  }
 }

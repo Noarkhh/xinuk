@@ -13,16 +13,15 @@ import pl.edu.agh.xinuk.config.XinukConfig
 import pl.edu.agh.xinuk.model._
 import pl.edu.agh.xinuk.model.grid.{GridCellId, GridWorldShard}
 import pl.edu.agh.xinuk.simulation.WorkerActor.{GuiInfo, MsgWrapper, SubscribeGuiInfo}
-import pl.edu.agh.xinuk.simulation.GuiCellParticles
+import pl.edu.agh.xinuk.simulation.GuiCellColor
 
 import scala.collection.mutable
 import scala.swing.BorderPanel.Position._
 import scala.swing.TabbedPane.Page
 import scala.swing._
 import scala.util.{Random, Try}
-import pl.edu.agh.xinuk.simulation.GuiParticle
 
-class SplitParticlesGuiActor private (
+class GridSplitGuiActor private (
     worker: ActorRef,
     simulationId: String,
     workerId: WorkerId,
@@ -33,7 +32,7 @@ class SplitParticlesGuiActor private (
 
   override def receive: Receive = started
 
-  private lazy val gui: SplitGuiParticles = new SplitGuiParticles(bounds, workerId)
+  private lazy val gui: SplitGuiGrid = new SplitGuiGrid(bounds, workerId)
 
   override def preStart(): Unit = {
     worker ! MsgWrapper(workerId, SubscribeGuiInfo())
@@ -46,29 +45,26 @@ class SplitParticlesGuiActor private (
   }
 
   def started: Receive = { case GuiInfo(iteration, cellPayloads, metrics) =>
-    val cellParticlesMap = cellPayloads.map({
-      case (cellId, cellPayload) => {
-        val cellParticles = cellPayload.asInstanceOf[GuiCellParticles]
-        (cellId, cellParticles)
-      }
+    val cellColors = cellPayloads.map({ case (cellId, cellPayload) =>
+      (cellId, cellPayload.asInstanceOf[GuiCellColor].color)
     })
-    gui.setNewValues(cellParticlesMap)
+    gui.setNewValues(cellColors)
     gui.updatePlot(iteration, metrics)
   }
 }
 
-object SplitParticlesGuiActor {
+object GridSplitGuiActor {
   def props(
       worker: ActorRef,
       simulationId: String,
       workerId: WorkerId,
       bounds: GridWorldShard.Bounds
   )(implicit config: XinukConfig): Props = {
-    Props(new SplitParticlesGuiActor(worker, simulationId, workerId, bounds))
+    Props(new GridSplitGuiActor(worker, simulationId, workerId, bounds))
   }
 }
 
-private[gui] class SplitGuiParticles(bounds: GridWorldShard.Bounds, workerId: WorkerId)(implicit
+private[gui] class SplitGuiGrid(bounds: GridWorldShard.Bounds, workerId: WorkerId)(implicit
     config: XinukConfig
 ) extends SimpleSwingApplication {
 
@@ -76,13 +72,7 @@ private[gui] class SplitGuiParticles(bounds: GridWorldShard.Bounds, workerId: Wo
 
   private val bgColor = new Color(220, 220, 220)
   private val cellView =
-    new SplitParticleCanvas(
-      bounds.xMin,
-      bounds.yMin,
-      bounds.xSize,
-      bounds.ySize,
-      config.guiCellSize
-    )
+    new ParticleCanvas(bounds.xMin, bounds.yMin, bounds.xSize, bounds.ySize, config.guiCellSize)
   private val chartPanel = new BorderPanel {
     background = bgColor
   }
@@ -138,57 +128,31 @@ private[gui] class SplitGuiParticles(bounds: GridWorldShard.Bounds, workerId: Wo
     (location, size)
   }
 
-  def setNewValues(cellParticlesMap: Map[CellId, GuiCellParticles]): Unit = {
-    cellView.set(cellParticlesMap)
+  def setNewValues(cellColors: Map[CellId, Color]): Unit = {
+    cellView.set(cellColors)
   }
 
-  private class SplitParticleCanvas(
-      xOffset: Int,
-      yOffset: Int,
-      xSize: Int,
-      ySize: Int,
-      guiCellSize: Int
-  ) extends Label {
+  private class ParticleCanvas(xOffset: Int, yOffset: Int, xSize: Int, ySize: Int, guiCellSize: Int)
+      extends Label {
     private val img =
       new BufferedImage(xSize * guiCellSize, ySize * guiCellSize, BufferedImage.TYPE_INT_ARGB)
 
     icon = new ImageIcon(img)
 
-    def set(cellParticlesMap: Map[CellId, GuiCellParticles]): Unit = {
-      val g = img.createGraphics()
-      g.setColor(Color.WHITE)
-      g.fillRect(0, 0, img.getWidth, img.getHeight)
-      g.setColor(new Color(180, 180, 180))
-      for (col <- 1 until xSize) {
-        g.drawLine(col * guiCellSize, 0, col * guiCellSize, img.getHeight)
-      }
-      for (row <- 1 until ySize) {
-        g.drawLine(0, row * guiCellSize, img.getWidth, row * guiCellSize)
-      }
-      g.dispose()
-
-      val particleSize = 1
-
-      cellParticlesMap.foreach {
-        case (GridCellId(gridX, gridY), GuiCellParticles(particles, particlesColor)) =>
-          val particleArray = Array.fill(particleSize * particleSize)(particlesColor.getRGB)
-          val startX = (gridX - xOffset) * guiCellSize
-          val startY = (gridY - yOffset) * guiCellSize
-          particles.foreach { case GuiParticle(particleX, particleY) =>
-            val pixelX = startX + (particleX * guiCellSize).toInt - particleSize / 2
-            val pixelY = startY + (particleY * guiCellSize).toInt - particleSize / 2
-            val clampedX = pixelX.max(0).min(img.getWidth - particleSize)
-            val clampedY = pixelY.max(0).min(img.getHeight - particleSize)
-            img.setRGB(
-              clampedX,
-              clampedY,
-              particleSize,
-              particleSize,
-              particleArray,
-              0,
-              particleSize
-            )
-          }
+    def set(cellColors: Map[CellId, Color]): Unit = {
+      cellColors.foreach {
+        case (GridCellId(x, y), color) =>
+          val startX = (x - xOffset) * guiCellSize
+          val startY = (y - yOffset) * guiCellSize
+          img.setRGB(
+            startX,
+            startY,
+            guiCellSize,
+            guiCellSize,
+            Array.fill(guiCellSize * guiCellSize)(color.getRGB),
+            0,
+            guiCellSize
+          )
         case _ =>
       }
       this.repaint()
@@ -213,7 +177,7 @@ private[gui] class SplitGuiParticles(bounds: GridWorldShard.Bounds, workerId: Wo
   def updatePlot(iteration: Long, metrics: Metrics): Unit = {
     def createSeries(name: String): XYSeries = {
       val series = new XYSeries(name)
-      series.setMaximumItemCount(SplitGuiParticles.MaximumPlotSize)
+      series.setMaximumItemCount(SplitGuiGrid.MaximumPlotSize)
       dataset.addSeries(series)
       series
     }
@@ -227,6 +191,6 @@ private[gui] class SplitGuiParticles(bounds: GridWorldShard.Bounds, workerId: Wo
 
 }
 
-object SplitGuiParticles {
+object SplitGuiGrid {
   final val MaximumPlotSize = 400
 }

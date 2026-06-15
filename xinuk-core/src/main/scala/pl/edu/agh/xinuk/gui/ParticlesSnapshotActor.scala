@@ -80,8 +80,8 @@ private class ParticlesSnapshotSaver(simulationId: String)(implicit config: Xinu
 
     val particleSize = 1
     cellParticles.foreach {
-      case (GridCellId(gridX, gridY), GuiCellParticles(particles, particlesColor)) =>
-        val particleArray = Array.fill(particleSize * particleSize)(particlesColor.getRGB)
+      case (GridCellId(gridX, gridY), GuiCellParticles(particles)) =>
+        val particleArray = Array.fill(particleSize * particleSize)(Color.BLACK.getRGB())
         val startX = gridX * config.guiCellSize
         val startY = gridY * config.guiCellSize
         particles.foreach { case GuiParticle(particleX, particleY) =>
